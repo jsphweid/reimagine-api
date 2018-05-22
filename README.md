@@ -1,0 +1,2 @@
+deploy with
+`serverless deploy`
