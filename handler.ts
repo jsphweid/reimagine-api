@@ -52,9 +52,7 @@ async function uploadFilesToS3(processedFileBuffers: ProcessedFileBufferType[]) 
 	})
 
 	for (let putObjectConfig of putObjectConfigs) {
-		console.log('starting s3 interaction')
 		const a = await s3.putObject(putObjectConfig).promise()
-		console.log('-----------', a)
 	}
 }
 
@@ -81,12 +79,10 @@ function conditionallyParseJson(maybeJson: any): any {
 export async function segmentize(event: any, context: Context, callback: Callback) {
 	let client
 	try {
-		console.log('starting', event)
 		const { fileBuffers } = conditionallyParseJson(event.body)
 		if (!fileBuffers) {
 			throw 'no "fileBuffers" in the post...'
 		}
-		console.log('about to process')
 		const processedFileBuffers: ProcessedFileBufferType[] = fileBuffers
 			.map((fileBuffer: string) => processFileBuffer(fileBuffer))
 			.filter(Boolean)
@@ -94,11 +90,8 @@ export async function segmentize(event: any, context: Context, callback: Callbac
 		if (!processedFileBuffers.length) {
 			throw 'no good midi files...'
 		}
-		console.log('processed files')
 		const segmentsStatement = formSegmentsStatement(processedFileBuffers)
-		console.log('segmentsStatement', segmentsStatement)
 		const piecesStatement = formPiecesStatement(processedFileBuffers)
-		console.log('piecesStatement', piecesStatement)
 		const rds = new AWS.RDS({ apiVersion: '2014-10-31' })
 		client = new Client({
 			user: 'reimagine_admin',
@@ -112,7 +105,6 @@ export async function segmentize(event: any, context: Context, callback: Callbac
 		const segmentsResult = await client.query(segmentsStatement)
 		const piecesResult = await client.query(piecesStatement)
 		if (segmentsResult && piecesResult) {
-			console.log('uploading to s3')
 			uploadFilesToS3(processedFileBuffers)
 			callback(null, {
 				statusCode: 200,
@@ -120,7 +112,6 @@ export async function segmentize(event: any, context: Context, callback: Callbac
 			})
 		}
 	} catch (e) {
-		console.log('caught exception', e)
 		callback(new Error(JSON.stringify(e)))
 	}
 
