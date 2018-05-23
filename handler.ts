@@ -21,7 +21,7 @@ function formSegmentsStatement(processedFileBuffers: ProcessedFileBufferType[]):
 		})
 	})
 
-	return `INSERT INTO segment (id, piece_id, difficulty, date, json, offset_time) VALUES ${innerStatements.join(
+	return `INSERT INTO segment (id, pieceId, difficulty, date, midiJson, offsetTime) VALUES ${innerStatements.join(
 		', '
 	)};`
 }
@@ -32,7 +32,7 @@ function formPiecesStatement(processedFileBuffers: ProcessedFileBufferType[]): s
 		const name = processedFileBuffer.segments[0].midiName
 		return `('${processedFileBuffer.md5Id}', '${name}', now(), '${s3Key}')`
 	})
-	return `INSERT INTO piece (id, name, date, s3_key) VALUES ${innerStatements.join(', ')};`
+	return `INSERT INTO piece (id, name, date, s3Key) VALUES ${innerStatements.join(', ')};`
 }
 
 function generateS3Name(processedFileBuffer: ProcessedFileBufferType) {
