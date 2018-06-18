@@ -1,16 +1,4 @@
-import { makeZeroedOutArray, mergeSegmentDataArrays, synthesizeSegments } from './helpers'
-
-describe('makeZeroedOutArray', () => {
-	it('should make basic array', () => {
-		expect(makeZeroedOutArray(5)).toEqual([0, 0, 0, 0, 0])
-	})
-})
-
-describe('makeZeroedOutArray', () => {
-	it('should make basic array', () => {
-		expect(makeZeroedOutArray(5)).toEqual([0, 0, 0, 0, 0])
-	})
-})
+import { synthesizeSegments } from './helpers'
 
 describe('synthesizeSegments', () => {
 	it('should make basic array', () => {

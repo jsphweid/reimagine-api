@@ -1,25 +1,32 @@
-import { Callback, Context } from 'aws-lambda'
 import { segmentizeMidi, SegmentInfoType } from 'midi-segmentizer'
 import * as AWS from 'aws-sdk'
+import { Callback, Context } from 'aws-lambda'
 const s3 = new AWS.S3()
 import { Client } from 'pg'
 import * as md5 from 'md5'
+const hashwords = require('hashwords')
+const hw = hashwords()
+let pieceId
 
 function formSegmentsStatement(processedFileBuffers: ProcessedFileBufferType[]): string {
 	const innerStatements: string[] = []
 	processedFileBuffers.forEach(segmentsAndMd5 => {
 		segmentsAndMd5.segments.forEach((segment: SegmentInfoType) => {
-			const pieceMd5 = `'${segmentsAndMd5.md5Id}'`
+			pieceId = segmentsAndMd5.md5Id
+			const formattedPieceId = `'${pieceId}'`
 			const jsonString = JSON.stringify(segment.midiJson)
 			const segmentMd5 = `'${md5(jsonString)}'`
+			const humanHash = `'${hw.hashStr(segmentMd5)}'`
 			const json = `'${jsonString}'`
 			innerStatements.push(
-				`(${segmentMd5}, ${pieceMd5}, ${segment.difficulty}, now(), ${json}, ${segment.offset})`
+				`(${segmentMd5}, ${formattedPieceId}, ${segment.difficulty}, now(), ${json}, ${
+					segment.offset
+				}, ${humanHash})`
 			)
 		})
 	})
 
-	return `INSERT INTO segment (id, pieceId, difficulty, date, midiJson, offsetTime) VALUES ${innerStatements.join(
+	return `INSERT INTO segment (id, "pieceId", difficulty, date, "midiJson", "offsetTime", "humanHash") VALUES ${innerStatements.join(
 		', '
 	)};`
 }
@@ -30,7 +37,7 @@ function formPiecesStatement(processedFileBuffers: ProcessedFileBufferType[]): s
 		const name = processedFileBuffer.segments[0].midiName
 		return `('${processedFileBuffer.md5Id}', '${name}', now(), '${s3Key}')`
 	})
-	return `INSERT INTO piece (id, name, date, s3Key) VALUES ${innerStatements.join(', ')};`
+	return `INSERT INTO piece (id, name, date, "s3Key") VALUES ${innerStatements.join(', ')};`
 }
 
 function generateS3Name(processedFileBuffer: ProcessedFileBufferType) {
@@ -106,10 +113,11 @@ export async function segmentize(event: any, context: Context, callback: Callbac
 			uploadFilesToS3(processedFileBuffers)
 			callback(null, {
 				statusCode: 200,
-				body: JSON.stringify({ segmentsResult, piecesResult })
+				body: JSON.stringify({ pieceId })
 			})
 		}
 	} catch (e) {
+		console.log('exception', e)
 		callback(new Error(JSON.stringify(e)))
 	}
 

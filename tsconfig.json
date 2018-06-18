@@ -2,7 +2,8 @@
 	"compilerOptions": {
 		"sourceMap": true,
 		"lib": ["es6"],
-		"target": "es6"
+		"target": "es6",
+		"moduleResolution": "node"
 	},
 	"exclude": ["node_modules"]
 }

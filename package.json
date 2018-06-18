@@ -6,11 +6,14 @@
 	"scripts": {
 		"synthesizer": "ts-node synthesizer-test.ts",
 		"test": "jest -t",
-		"test:dev": "jest --watchAll -t"
+		"test:dev": "jest --watchAll -t",
+		"segmentizer": "ts-node segmentizer-test.ts"
 	},
 	"dependencies": {
-		"aws-sdk": "^2.243.1",
+		"aws-sdk": "^2.259.1",
+		"hashwords": "github:jsphweid/hashwords",
 		"md5": "^2.2.1",
+		"midi-segmentizer": "0.0.6",
 		"node-wav": "0.0.2",
 		"pg": "^7.4.3",
 		"pg-native": "^3.0.0",
@@ -18,7 +21,6 @@
 	},
 	"devDependencies": {
 		"@types/aws-lambda": "0.0.22",
-		"@types/aws-sdk": "^2.7.0",
 		"@types/jest": "^23.1.0",
 		"@types/md5": "^2.1.32",
 		"@types/node": "^8.0.57",
@@ -28,7 +30,7 @@
 		"ts-jest": "^22.4.6",
 		"ts-loader": "^2.3.7",
 		"ts-node": "^6.1.1",
-		"typescript": "^2.5.2",
+		"typescript": "^2.9.2",
 		"webpack": "^3.6.0"
 	},
 	"jest": {
