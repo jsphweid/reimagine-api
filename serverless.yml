@@ -16,7 +16,7 @@ provider:
 
 functions:
   midiSegmentizer:
-    handler: segmentizer.segmentize
+    handler: src/midi-segmentizer/segmentizer.segmentize
     events:
       - http:
           method: post
