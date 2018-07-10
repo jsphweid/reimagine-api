@@ -19,12 +19,12 @@ async function getRandomSegmentId(): Promise<string> {
 export async function getSegment(event: any, context: Context, callback: Callback) {
 	context.callbackWaitsForEmptyEventLoop = false
 	const segmentId = event.id || (await getRandomSegmentId())
-	console.log('segmentId', segmentId)
+
 	const client = await getPgClient()
 	const result = await client.query(`select * from segment where id = '${segmentId}'`)
-	console.log('result', result)
+
 	if (!result.rows.length) return callback(new Error('Unable to get segment'))
 	const drilledResult = result.rows[0]
-	console.log('drilledResult', drilledResult)
+
 	callback(null, { ...drilledResult, midiJson: JSON.stringify(drilledResult.midiJson) })
 }
