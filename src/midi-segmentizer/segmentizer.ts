@@ -18,17 +18,11 @@ function formSegmentsStatement(processedFileBuffers: ProcessedFileBufferType[]):
 			const segmentMd5 = `'${md5(jsonString)}'`
 			const humanHash = `'${hw.hashStr(segmentMd5)}'`
 			const json = `'${jsonString}'`
-			innerStatements.push(
-				`(${segmentMd5}, ${formattedPieceId}, ${segment.difficulty}, now(), ${json}, ${
-					segment.offset
-				}, ${humanHash})`
-			)
+			innerStatements.push(`(${segmentMd5}, ${formattedPieceId}, ${segment.difficulty}, now(), ${json}, ${segment.offset}, ${humanHash})`)
 		})
 	})
 
-	return `INSERT INTO segment (id, "pieceId", difficulty, date, "midiJson", "offsetTime", "humanHash") VALUES ${innerStatements.join(
-		', '
-	)};`
+	return `INSERT INTO segment (id, "pieceId", difficulty, date, "midiJson", "offsetTime", "humanHash") VALUES ${innerStatements.join(', ')};`
 }
 
 function formPiecesStatement(processedFileBuffers: ProcessedFileBufferType[]): string {
@@ -88,9 +82,7 @@ export async function segmentize(event: any, context: Context, callback: Callbac
 		if (!fileBuffers) {
 			throw 'no "fileBuffers" in the post...'
 		}
-		const processedFileBuffers: ProcessedFileBufferType[] = fileBuffers
-			.map((fileBuffer: string) => processFileBuffer(fileBuffer))
-			.filter(Boolean)
+		const processedFileBuffers: ProcessedFileBufferType[] = fileBuffers.map((fileBuffer: string) => processFileBuffer(fileBuffer)).filter(Boolean)
 
 		if (!processedFileBuffers.length) {
 			throw 'no good midi files...'

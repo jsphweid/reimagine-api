@@ -14,17 +14,23 @@ provider:
       Resource:
         - "arn:aws:s3:::reimagine.io-warehouse/*"
 
+custom:
+  myVpc:
+    securityGroupIds:
+      - sg-a95b0cdd
+    subnetIds:
+      - subnet-24c0a40b
+      - subnet-134ad24e
+      - subnet-73351838
+
 functions:
+  segmentGetter:
+    handler: src/get-segment/get-segment.getSegment
+    vpc: ${self:custom.myVpc}
   midiSegmentizer:
     handler: src/midi-segmentizer/segmentizer.segmentize
     events:
       - http:
           method: post
           path: newMidi
-    vpc:
-      securityGroupIds:
-        - sg-a95b0cdd
-      subnetIds:
-        - subnet-24c0a40b
-        - subnet-134ad24e
-        - subnet-73351838
+    vpc: ${self:custom.myVpc}
