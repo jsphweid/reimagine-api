@@ -2,18 +2,16 @@ import { segmentizeMidi, SegmentInfoType } from 'midi-segmentizer'
 import * as AWS from 'aws-sdk'
 import { Callback, Context } from 'aws-lambda'
 const s3 = new AWS.S3()
-import { Client } from 'pg'
 import * as md5 from 'md5'
+import getPgClient from '../common/postgres'
 const hashwords = require('hashwords')
 const hw = hashwords()
-let pieceId
 
 function formSegmentsStatement(processedFileBuffers: ProcessedFileBufferType[]): string {
 	const innerStatements: string[] = []
 	processedFileBuffers.forEach(segmentsAndMd5 => {
 		segmentsAndMd5.segments.forEach((segment: SegmentInfoType) => {
-			pieceId = segmentsAndMd5.md5Id
-			const formattedPieceId = `'${pieceId}'`
+			const formattedPieceId = `'${segmentsAndMd5.md5Id}'`
 			const jsonString = JSON.stringify(segment.midiJson)
 			const segmentMd5 = `'${md5(jsonString)}'`
 			const humanHash = `'${hw.hashStr(segmentMd5)}'`
@@ -75,43 +73,36 @@ function conditionallyParseJson(maybeJson: any): any {
 	}
 }
 
-export async function segmentize(event: any, context: Context, callback: Callback) {
-	let client
+export async function handler(event: any, context: Context, callback: Callback) {
 	try {
-		const { fileBuffers } = conditionallyParseJson(event.body)
-		if (!fileBuffers) {
-			throw 'no "fileBuffers" in the post...'
-		}
-		const processedFileBuffers: ProcessedFileBufferType[] = fileBuffers.map((fileBuffer: string) => processFileBuffer(fileBuffer)).filter(Boolean)
+		context.callbackWaitsForEmptyEventLoop = false
+		const { fileBuffers } = conditionallyParseJson(event)
 
-		if (!processedFileBuffers.length) {
+		if (!fileBuffers) throw 'no "fileBuffers" in the post...'
+
+		const processedFileBuffers: ProcessedFileBufferType[] = fileBuffers.map((fileBuffer: string) => processFileBuffer(fileBuffer))
+
+		const ids = processedFileBuffers.map(item => (item ? item.md5Id : null))
+
+		const goodProcessedFileBuffers = processedFileBuffers.filter(Boolean)
+
+		if (!goodProcessedFileBuffers.length) {
 			throw 'no good midi files...'
 		}
-		const segmentsStatement = formSegmentsStatement(processedFileBuffers)
-		const piecesStatement = formPiecesStatement(processedFileBuffers)
+		const segmentsStatement = formSegmentsStatement(goodProcessedFileBuffers)
+		const piecesStatement = formPiecesStatement(goodProcessedFileBuffers)
 
-		client = new Client({
-			user: 'reimagine_admin',
-			host: 'reimagineinstance.czbydqdgzi5u.us-east-1.rds.amazonaws.com',
-			database: 'reimagine_db',
-			password: 'reimaginejoseph',
-			port: 5432
-		})
+		const client = await getPgClient()
 
-		await client.connect()
 		const segmentsResult = await client.query(segmentsStatement)
 		const piecesResult = await client.query(piecesStatement)
+
 		if (segmentsResult && piecesResult) {
-			uploadFilesToS3(processedFileBuffers)
-			callback(null, {
-				statusCode: 200,
-				body: JSON.stringify({ pieceId })
-			})
+			uploadFilesToS3(goodProcessedFileBuffers)
+			callback(null, { ids })
 		}
 	} catch (e) {
 		console.log('exception', e)
 		callback(new Error(JSON.stringify(e)))
 	}
-
-	client.end()
 }

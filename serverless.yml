@@ -25,12 +25,11 @@ custom:
 
 functions:
   segmentGetter:
-    handler: src/get-segment/get-segment.getSegment
+    handler: src/get-segment/get-segment.handler
     vpc: ${self:custom.myVpc}
-  midiSegmentizer:
-    handler: src/midi-segmentizer/segmentizer.segmentize
-    events:
-      - http:
-          method: post
-          path: newMidi
+  midiPoster:
+    handler: src/post-midi/post-midi.handler
+    vpc: ${self:custom.myVpc}
+  recordingPoster:
+    handler: src/post-recording/post-recording.handler
     vpc: ${self:custom.myVpc}

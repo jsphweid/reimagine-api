@@ -1,6 +1,6 @@
 import getPgClient from '../common/postgres'
 import { pickRandomItem } from '../common/helpers'
-import { Context, Callback } from '../../node_modules/@types/aws-lambda'
+import { Context, Callback } from 'aws-lambda'
 
 async function getRandomSegmentId(): Promise<string> {
 	const client = await getPgClient()
@@ -16,7 +16,7 @@ async function getRandomSegmentId(): Promise<string> {
 	return idsThatHaveNoRecordings.length ? pickRandomItem(idsThatHaveNoRecordings) : pickRandomItem(result.rows.map(row => row.id))
 }
 
-export async function getSegment(event: any, context: Context, callback: Callback) {
+export async function handler(event: any, context: Context, callback: Callback) {
 	context.callbackWaitsForEmptyEventLoop = false
 	const segmentId = event.id || (await getRandomSegmentId())
 
