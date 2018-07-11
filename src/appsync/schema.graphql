@@ -1,0 +1,67 @@
+type Id {
+	id: String
+}
+
+type Ids {
+	ids: [String]
+}
+
+type Mutation {
+	createUserSettings(id: String, input: UserSettingsInput!): UserSettings
+	updateUserSettings(id: String!, input: UserSettingsInput!): UserSettings
+	postRecording(base64Blob: String!, segmentId: String!, samplingRate: Int!): Id
+	postMidi(fileBuffers: [String]!): Ids
+}
+
+type PlayRecordConfig {
+	playNotes: Boolean
+	playMetronome: Boolean
+}
+
+input PlayRecordConfigInput {
+	playNotes: Boolean
+	playMetronome: Boolean
+}
+
+type PlayRecordConfigs {
+	playSegmentConfig: PlayRecordConfig
+	playRecordingConfig: PlayRecordConfig
+	recordConfig: PlayRecordConfig
+}
+
+input PlayRecordConfigsInput {
+	playSegmentConfig: PlayRecordConfigInput
+	playRecordingConfig: PlayRecordConfigInput
+	recordConfig: PlayRecordConfigInput
+}
+
+type Query {
+	getUserSettings(id: String!): UserSettings
+	getSegment(id: String): Segment
+}
+
+type Segment {
+	id: String
+	humanHash: String
+	pieceId: String
+	difficulty: Int
+	date: String
+	midiJson: String
+	offsetTime: Float
+}
+
+type UserSettings {
+	id: String!
+	playRecordConfigs: PlayRecordConfigs!
+	nickname: String!
+}
+
+input UserSettingsInput {
+	playRecordConfigs: PlayRecordConfigsInput
+	nickname: String!
+}
+
+schema {
+	query: Query
+	mutation: Mutation
+}

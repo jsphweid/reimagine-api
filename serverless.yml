@@ -1,8 +1,9 @@
 service:
-  name: reimagine-processors
+  name: reimagine-api
 
 plugins:
   - serverless-webpack
+  - serverless-appsync-plugin
 
 provider:
   name: aws
@@ -14,15 +15,6 @@ provider:
       Resource:
         - "arn:aws:s3:::reimagine.io-warehouse/*"
 
-custom:
-  myVpc:
-    securityGroupIds:
-      - sg-a95b0cdd
-    subnetIds:
-      - subnet-24c0a40b
-      - subnet-134ad24e
-      - subnet-73351838
-
 functions:
   segmentGetter:
     handler: src/get-segment/get-segment.handler
@@ -33,3 +25,116 @@ functions:
   recordingPoster:
     handler: src/post-recording/post-recording.handler
     vpc: ${self:custom.myVpc}
+
+custom:
+  myVpc:
+    securityGroupIds:
+      - sg-a95b0cdd
+    subnetIds:
+      - subnet-24c0a40b
+      - subnet-134ad24e
+      - subnet-73351838
+  accountId: 801215208692
+  region: us-east-1
+  appSync:
+    name:  reimagine-appsync
+    # apiKey # only required for update-appsync/delete-appsync
+    authenticationType: AWS_IAM
+    logConfig:
+      loggingRoleArn: arn:aws:iam::${self:custom.accountId}:role/service-role/appsync-graphqlapi-logs-us-east-1
+      level: ALL
+    mappingTemplatesLocation: src/appsync/mapping-templates
+    mappingTemplates:
+      - dataSource: user_settings
+        type: Mutation
+        field: createUserSettings
+        request: createUserSettings-request-mapping-template.txt
+        response: createUserSettings-response-mapping-template.txt
+      - dataSource: user_settings
+        type: Mutation
+        field: updateUserSettings
+        request: updateUserSettings-request-mapping-template.txt
+        response: updateUserSettings-response-mapping-template.txt
+      - dataSource: user_settings
+        type: Query
+        field: getUserSettings
+        request: getUserSettings-request-mapping-template.txt
+        response: getUserSettings-response-mapping-template.txt
+      - dataSource: get_segment_lambda
+        type: Query
+        field: getSegment
+        request: getSegment-request-mapping-template.txt
+        response: getSegment-response-mapping-template.txt
+      - dataSource: post_midi_lambda
+        type: Mutation
+        field: postMidi
+        request: postMidi-request-mapping-template.txt
+        response: postMidi-response-mapping-template.txt
+      - dataSource: post_recording_lambda
+        type: Mutation
+        field: postRecording
+        request: postRecording-request-mapping-template.txt
+        response: postRecording-response-mapping-template.txt
+    schema: src/appsync/schema.graphql
+    serviceRole: "AppSyncServiceRole"
+    dataSources:
+      - type: AMAZON_DYNAMODB
+        name: user_settings
+        description: User Settings in DynamoDB
+        config:
+          tableName: reimagine_users
+          serviceRoleArn: arn:aws:iam::${self:custom.accountId}:role/service-role/appsync-datasource-ddb-dhcjcl-reimagine_users
+      - type: AWS_LAMBDA
+        name: get_segment_lambda
+        description: 'Get Segment Lambda'
+        config:
+          lambdaFunctionArn: arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-segmentGetter
+          serviceRoleArn: { Fn::GetAtt: [AppSyncLambdaServiceRole, Arn] }
+      - type: AWS_LAMBDA
+        name: post_midi_lambda
+        description: 'Post Midi Lambda'
+        config:
+          lambdaFunctionArn: arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-midiPoster
+          serviceRoleArn: { Fn::GetAtt: [AppSyncLambdaServiceRole, Arn] }
+      - type: AWS_LAMBDA
+        name: post_recording_lambda
+        description: 'Post Recording Lambda'
+        config:
+          lambdaFunctionArn: arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-recordingPoster
+          serviceRoleArn: { Fn::GetAtt: [AppSyncLambdaServiceRole, Arn] }
+
+
+
+resources:
+  Resources:
+    AppSyncLambdaServiceRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: "Lambda-${self:custom.appSync.serviceRole}"
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            -
+              Effect: "Allow"
+              Principal:
+                Service:
+                  - "appsync.amazonaws.com"
+              Action:
+                - "sts:AssumeRole"
+        Policies:
+          -
+            PolicyName: "Lambda-${self:custom.appSync.serviceRole}-Policy"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                -
+                  Effect: "Allow"
+                  Action:
+                    - "lambda:invokeFunction"
+                  Resource:
+                    - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev*"
+                    - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-recordingPoster"
+                    - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-midiPoster"
+                    - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-segmentGetter:*"
+                    - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-recordingPoster:*"
+                    - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-midiPoster:*"
