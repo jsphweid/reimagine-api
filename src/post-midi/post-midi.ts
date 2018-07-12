@@ -76,6 +76,9 @@ function conditionallyParseJson(maybeJson: any): any {
 export async function handler(event: any, context: Context, callback: Callback) {
 	try {
 		context.callbackWaitsForEmptyEventLoop = false
+
+		if (event.unauthorized) return callback(new Error('unauthorized'))
+
 		const { fileBuffers } = conditionallyParseJson(event)
 
 		if (!fileBuffers) throw 'no "fileBuffers" in the post...'
@@ -102,7 +105,6 @@ export async function handler(event: any, context: Context, callback: Callback) 
 			callback(null, { ids })
 		}
 	} catch (e) {
-		console.log('exception', e)
 		callback(new Error(JSON.stringify(e)))
 	}
 }
