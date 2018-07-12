@@ -38,7 +38,6 @@ custom:
   region: us-east-1
   appSync:
     name:  reimagine-appsync
-    # apiKey # only required for update-appsync/delete-appsync
     authenticationType: AWS_IAM
     logConfig:
       loggingRoleArn: arn:aws:iam::${self:custom.accountId}:role/service-role/appsync-graphqlapi-logs-us-east-1
