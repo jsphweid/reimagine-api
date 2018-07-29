@@ -25,6 +25,9 @@ functions:
   recordingPoster:
     handler: src/post-recording/post-recording.handler
     vpc: ${self:custom.myVpc}
+  mixCreator:
+    handler: src/create-mix/create-mix.handler
+    vpc: ${self:custom.myVpc}
 
 custom:
   myVpc:
@@ -101,6 +104,12 @@ custom:
         config:
           lambdaFunctionArn: arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-recordingPoster
           serviceRoleArn: { Fn::GetAtt: [AppSyncLambdaServiceRole, Arn] }
+      - type: AWS_LAMBDA
+        name: create_mix_lambda
+        description: 'Create Mix Lambda'
+        config:
+          lambdaFunctionArn: arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-mixCreator
+          serviceRoleArn: { Fn::GetAtt: [AppSyncLambdaServiceRole, Arn] }
 
 
 
@@ -134,6 +143,8 @@ resources:
                     - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev*"
                     - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-recordingPoster"
                     - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-midiPoster"
+                    - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-mixCreator"
                     - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-segmentGetter:*"
                     - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-recordingPoster:*"
                     - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-midiPoster:*"
+                    - "arn:aws:lambda:${self:custom.region}:${self:custom.accountId}:function:reimagine-api-dev-mixCreator:*"
