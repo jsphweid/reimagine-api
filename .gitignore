@@ -12,3 +12,4 @@ jspm_packages
 *.iml
 
 *.wav
+__generatedTypes__

@@ -7,7 +7,8 @@
 		"synthesizer": "ts-node synthesizer-test.ts",
 		"test": "jest -t",
 		"test:dev": "jest --watchAll -t",
-		"segmentizer": "ts-node segmentizer-test.ts"
+		"segmentizer": "ts-node segmentizer-test.ts",
+		"generateTypes": "gql-gen --schema './src/appsync/**/*.graphql' --template graphql-codegen-typescript-template --out ./__generatedTypes__/types.ts"
 	},
 	"dependencies": {
 		"aws-sdk": "^2.259.1",
@@ -26,6 +27,9 @@
 		"@types/md5": "^2.1.32",
 		"@types/node": "^8.0.57",
 		"@types/pg": "^7.4.9",
+		"graphql": "^0.13.2",
+		"graphql-code-generator": "^0.10.4",
+		"graphql-codegen-typescript-template": "^0.10.4",
 		"jest": "^23.1.0",
 		"serverless-webpack": "^4.0.0",
 		"ts-jest": "^22.4.6",
