@@ -1,54 +1,55 @@
 {
-	"name": "processor-lambda",
-	"version": "1.0.0",
-	"description": "Serverless webpack example using Typescript",
-	"main": "handler.js",
-	"scripts": {
-		"synthesizer": "ts-node synthesizer-test.ts",
-		"test": "jest -t",
-		"test:dev": "jest --watchAll -t",
-		"segmentizer": "ts-node segmentizer-test.ts",
-		"generateTypes": "gql-gen --schema './src/appsync/**/*.graphql' --template graphql-codegen-typescript-template --out ./__generatedTypes__/types.ts"
-	},
-	"dependencies": {
-		"aws-sdk": "^2.259.1",
-		"hashwords": "github:jsphweid/hashwords",
-		"md5": "^2.2.1",
-		"midi-segmentizer": "0.0.6",
-		"node-wav": "0.0.2",
-		"pg": "^7.4.3",
-		"pg-native": "^3.0.0",
-		"serverless-appsync-plugin": "^1.0.1",
-		"source-map-support": "^0.5.0"
-	},
-	"devDependencies": {
-		"@types/aws-lambda": "0.0.22",
-		"@types/jest": "^23.1.0",
-		"@types/md5": "^2.1.32",
-		"@types/node": "^8.0.57",
-		"@types/pg": "^7.4.9",
-		"graphql": "^0.13.2",
-		"graphql-code-generator": "^0.10.4",
-		"graphql-codegen-typescript-template": "^0.10.4",
-		"jest": "^23.1.0",
-		"serverless-webpack": "^4.0.0",
-		"ts-jest": "^22.4.6",
-		"ts-loader": "^2.3.7",
-		"ts-node": "^6.1.1",
-		"typescript": "^2.9.2",
-		"webpack": "^3.6.0"
-	},
-	"jest": {
-		"setupFiles": [],
-		"moduleFileExtensions": [
-			"ts",
-			"js"
-		],
-		"transform": {
-			"\\.(ts)$": "./node_modules/ts-jest/preprocessor.js"
-		},
-		"testRegex": "/.*\\.test.(ts|js)$"
-	},
-	"author": "Joseph Weidinger",
-	"license": "MIT"
+  "name": "processor-lambda",
+  "version": "1.0.0",
+  "description": "Serverless webpack example using Typescript",
+  "main": "handler.js",
+  "scripts": {
+    "synthesizer": "ts-node synthesizer-test.ts",
+    "test": "jest -t",
+    "test:dev": "jest --watchAll -t",
+    "prettier": "prettier --config .prettierrc --write 'src/**/*.{js,ts}'",
+    "segmentizer": "ts-node segmentizer-test.ts",
+    "generateTypes": "gql-gen --schema './src/appsync/**/*.graphql' --template graphql-codegen-typescript-template --out ./__generatedTypes__/types.ts"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.259.1",
+    "hashwords": "github:jsphweid/hashwords",
+    "md5": "^2.2.1",
+    "midi-segmentizer": "0.0.6",
+    "node-wav": "0.0.2",
+    "pg": "^7.4.3",
+    "pg-native": "^3.0.0",
+    "serverless-appsync-plugin": "^1.0.1",
+    "source-map-support": "^0.5.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "0.0.22",
+    "@types/jest": "^23.1.0",
+    "@types/md5": "^2.1.32",
+    "@types/node": "^8.0.57",
+    "@types/pg": "^7.4.9",
+    "graphql": "^0.13.2",
+    "graphql-code-generator": "^0.10.4",
+    "graphql-codegen-typescript-template": "^0.10.4",
+    "jest": "^23.1.0",
+    "serverless-webpack": "^4.0.0",
+    "ts-jest": "^22.4.6",
+    "ts-loader": "^2.3.7",
+    "ts-node": "^6.1.1",
+    "typescript": "^2.9.2",
+    "webpack": "^3.6.0"
+  },
+  "jest": {
+    "setupFiles": [],
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "transform": {
+      "\\.(ts)$": "./node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "/.*\\.test.(ts|js)$"
+  },
+  "author": "Joseph Weidinger",
+  "license": "MIT"
 }
