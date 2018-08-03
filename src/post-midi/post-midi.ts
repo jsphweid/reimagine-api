@@ -12,10 +12,10 @@ function formSegmentsStatement(
 ): string {
   const innerStatements: string[] = []
   processedFileBuffers.forEach(segmentsAndMd5 => {
-    segmentsAndMd5.segments.forEach((segment: SegmentInfoType) => {
+    segmentsAndMd5.segments.forEach((segment: SegmentInfoType, i: number) => {
       const formattedPieceId = `'${segmentsAndMd5.md5Id}'`
       const jsonString = JSON.stringify(segment.midiJson)
-      const segmentMd5 = `'${md5(jsonString)}'`
+      const segmentMd5 = `'${md5(jsonString)}${i}'`
       const humanHash = `'${hw.hashStr(segmentMd5)}'`
       const json = `'${jsonString}'`
       innerStatements.push(
