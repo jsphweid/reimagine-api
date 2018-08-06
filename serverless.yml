@@ -14,6 +14,11 @@ provider:
         - "s3:*"
       Resource:
         - "arn:aws:s3:::reimagine.io-warehouse/*"
+    - Effect: "Allow"
+      Action:
+        - "lambda:InvokeFunction"
+      Resource:
+        - "*"
 
 functions:
   segmentGetter:

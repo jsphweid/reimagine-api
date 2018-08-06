@@ -1,58 +1,99 @@
 import * as md5 from 'md5'
 import getPgClient from '../common/postgres'
 import { Context, Callback } from 'aws-lambda'
-import {
-  RecordingFragmentSpec,
-  CreateMixFromRecordingFragmentsMutationArgs
-} from '../../__generatedTypes__/types'
+import { CreateMixMutationArgs } from '../../__generatedTypes__/types'
 import * as aws from 'aws-sdk'
+import { pickRandomItem } from '../common/helpers'
+
+interface RecordingFragmentSpecType {
+  s3Key: string
+  offsetTime: number
+}
 
 export async function handler(
-  event: CreateMixFromRecordingFragmentsMutationArgs,
+  event: CreateMixMutationArgs,
   context: Context,
   callback: Callback
 ) {
   context.callbackWaitsForEmptyEventLoop = false
 
-  const mixId = createMixId(event.recordings)
+  const recordings: RecordingFragmentSpecType[] = await getRecordingFragments(
+    event.pieceId
+  )
+  const mixId = createMixId(recordings)
 
   if (await mixAlreadyExists(mixId)) {
     console.log(`id ${mixId} already exists.`)
     return callback(null, { id: mixId })
   }
 
-  const result = await mixAndUpload(mixId, event.recordings)
-
-  // const { base64Blob, segmentId, samplingRate } = event
-
-  // const result = await postRecording(base64Blob, segmentId, samplingRate)
-
-  // if (result.error) return callback(new Error(result.error))
-
+  const result = await mixAndUpload(mixId, recordings)
+  console.log('result', result)
   return callback(null, { id: mixId })
+}
+
+async function getRecordingFragments(
+  pieceId: string
+): Promise<RecordingFragmentSpecType[]> {
+  const client = await getPgClient()
+  const result = await client.query(`
+    select "s3Key", "segmentId", "offsetTime"
+    from recording
+    inner join segment on segment.id = recording."segmentId"
+    where "pieceId" = '${pieceId}';
+  `)
+  const obj: { [key: string]: RecordingFragmentSpecType[] } = {}
+
+  result.rows.forEach(({ s3Key, segmentId, offsetTime }) => {
+    if (obj[segmentId]) {
+      obj[segmentId].push({ s3Key, offsetTime })
+    } else {
+      obj[segmentId] = [{ s3Key, offsetTime }]
+    }
+  })
+
+  return Object.values(obj).map(recordingFragments =>
+    pickRandomItem(recordingFragments)
+  )
+}
+
+// S3Key     string   `json:"s3Key"`
+// StartTime *float64 `json:"startTime"`
+// EndTime   *float64 `json:"endTime"`
+// Offset    *float64 `json:"offset"`
+
+interface GolangRecordingInfoType {
+  S3Key: string
+  StartTime?: number
+  EndTime?: number
+  Offset?: number
 }
 
 async function mixAndUpload(
   mixId: string,
-  recordings: RecordingFragmentSpec[]
-): Promise<string | null> {
-  const OutputKey = `mixes/${mixId}.wav`
-  const Payload = JSON.stringify({ Recordings: recordings, OutputKey })
+  recordings: RecordingFragmentSpecType[]
+): Promise<any> {
+  const outputKey = `mixes/${mixId}.wav`
 
-  return new Promise(resolve => {
-    new aws.Lambda({ region: 'us-east-1' }).invoke(
-      { Payload, FunctionName: 'reimagine-go-api-dev-mixer' },
-      (error, data) => {
-        if (error) {
-          console.log('error', error)
-          resolve(null)
-        } else {
-          console.log('data', data)
-          resolve('hi')
-        }
-      }
-    )
+  const recordingsTransformed: GolangRecordingInfoType[] = recordings.map(
+    ({ s3Key, offsetTime }) => ({ S3Key: s3Key, Offset: offsetTime })
+  )
+  const Payload = JSON.stringify({
+    recordings: recordingsTransformed,
+    outputKey
   })
+
+  const lambda = new aws.Lambda({ region: 'us-east-1' })
+  console.log('Payload', Payload)
+  return lambda
+    .invoke({
+      FunctionName:
+        'arn:aws:lambda:us-east-1:801215208692:function:reimagine-go-api-dev-mixer',
+      Payload,
+      LogType: 'Tail',
+      InvocationType: 'Event'
+    })
+    .promise()
 }
 
 async function mixAlreadyExists(mixId: string) {
@@ -61,12 +102,12 @@ async function mixAlreadyExists(mixId: string) {
   return result.rows > 0
 }
 
-function createMixId(recordings: RecordingFragmentSpec[]): string | null {
+function createMixId(recordings: RecordingFragmentSpecType[]): string | null {
   const recordingsCopy = recordings.slice()
   recordingsCopy.sort((a, b) => {
-    if (a.recordingId < b.recordingId) {
+    if (a.s3Key < b.s3Key) {
       return -1
-    } else if (a.recordingId > b.recordingId) {
+    } else if (a.s3Key > b.s3Key) {
       return 1
     } else {
       return 0

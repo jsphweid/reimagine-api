@@ -6,19 +6,12 @@ type Ids {
   ids: [String]
 }
 
-type RecordingFragmentSpec {
-  recordingId: String!
-  startTime: Float
-  endTime: Float
-  offsetTime: Float
-}
-
 type Mutation {
   createUserSettings(id: String, input: UserSettingsInput!): UserSettings
   updateUserSettings(id: String!, input: UserSettingsInput!): UserSettings
   postRecording(base64Blob: String!, segmentId: String!, samplingRate: Int!): Id
   postMidi(fileBuffers: [String]!): Ids
-  createMixFromRecordingFragments(recordings: [RecordingFragmentSpec]!): Id
+  createMix(pieceId: String!): Id
 }
 
 type PlayRecordConfig {
