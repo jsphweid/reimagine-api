@@ -1,15 +1,11 @@
-# package directories
-node_modules
-jspm_packages
-
-# Serverless directories
-.serverless
-
-# Webpack directories
-.webpack
-
-.idea
-*.iml
-
-*.wav
-__generatedTypes__
+node_modules/
+build/
+cdk/*.js
+cdk/cdk.out
+local/
+generated.ts
+deploy.sh
+destroy.sh
+run-locally.sh
+capture-locally.ts
+.DS_Store

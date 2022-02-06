@@ -1,2 +1,1 @@
-deploy with
-`serverless deploy`
+# Reimagine-API

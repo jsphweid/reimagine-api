@@ -3,7 +3,9 @@
     "sourceMap": true,
     "lib": ["es6", "esnext"],
     "target": "es6",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "strict": true,
+    "allowSyntheticDefaultImports": true
   },
   "exclude": ["node_modules"]
 }
