@@ -1,5 +1,0 @@
-#if($ctx.result["id"] == $ctx.identity.cognitoIdentityId || $ctx.identity.username == '801215208692')
-	$util.toJson($ctx.result)
-#else
-    $util.unauthorized()
-#end

@@ -21,7 +21,7 @@ export const typeDefs = gql`
   type Recording {
     id: String
     segmentId: String
-    url: String
+    objectKey: String
     dateCreated: String
   }
 
