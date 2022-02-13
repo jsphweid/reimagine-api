@@ -24,7 +24,7 @@ function mapSegment(item: any): Segment {
   };
 }
 
-export async function saveSegment(segment: Segment): Promise<Segment> {
+export async function _saveSegment(segment: Segment): Promise<Segment> {
   const date = segment.dateCreated.toISOString();
   return documentClient
     .put({
@@ -49,7 +49,7 @@ export async function saveSegment(segment: Segment): Promise<Segment> {
     .then(() => segment);
 }
 
-export async function getSegmentById(
+export async function _getSegmentById(
   segmentId: string
 ): Promise<Segment | null> {
   return documentClient
@@ -61,11 +61,11 @@ export async function getSegmentById(
     .then((res) => (res.Item ? mapSegment(res.Item) : null));
 }
 
-export async function getRandomSegment() {
+export async function _getRandomSegment() {
   // TODO: implement
 }
 
-export async function getSegmentsByPieceId(
+export async function _getSegmentsByPieceId(
   pieceId: string
 ): Promise<Segment[]> {
   // TODO: handle pagination

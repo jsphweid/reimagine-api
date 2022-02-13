@@ -37,4 +37,12 @@ export namespace Utils {
 
   // .filter(Utils.isTruthy) is a type-safe version of .filter(Boolean)
   export const isTruthy = <T>(item: T | null | undefined): item is T => !!item;
+
+  export const objectIsEmpty = <T extends Object>(obj: T): boolean => {
+    return (
+      obj &&
+      Object.keys(obj).length === 0 &&
+      Object.getPrototypeOf(obj) === Object.prototype
+    );
+  };
 }

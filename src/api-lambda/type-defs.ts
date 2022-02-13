@@ -32,15 +32,12 @@ export const typeDefs = gql`
   }
 
   type UserSettings {
-    userId: String
     metronomeOnSegmentPlay: Boolean
     notesOnSegmentPlay: Boolean
     metronomeOnRecord: Boolean
     notesOnRecord: Boolean
     metronomeOnRecordingPlay: Boolean
     notesOnRecordingPlay: Boolean
-    dateCreated: String
-    dateUpdated: String
   }
 
   input UserSettingsInput {
@@ -53,7 +50,6 @@ export const typeDefs = gql`
   }
 
   type Mutation {
-    createUserSettings(userId: String!, input: UserSettingsInput!): UserSettings
     updateUserSettings(userId: String!, input: UserSettingsInput!): UserSettings
 
     postRecording(
@@ -62,21 +58,21 @@ export const typeDefs = gql`
       samplingRate: Int!
     ): Recording
 
-    postMidi(fileBuffers: [String!]!): [String]
+    # postMidi(fileBuffers: [String!]!): [String]
     # createMixFromRecordingFragments(
     #   recordings: [RecordingFragmentSpec]!
     # ): String
   }
 
   type Query {
-    getUserSettings(userId: String!): UserSettings
-    getRecordings(recordingIds: [String!]!): [Recording]
+    getUserSettingsByUserId(userId: String!): UserSettings
+    getRecordingsByIds(recordingIds: [String!]!): [Recording]
     getRecordingsByUserId(userId: String!): [Recording]
-    getMixes(mixIds: [String!]!): [Mix]
     getMixesByPieceId(pieceId: String!): [Mix]
     getMixesByRecordingId(recordingId: String!): [Mix]
 
     # not passing a segmentId returns a random segment...
-    getSegment(segmentId: String): Segment
+    getSegmentById(segmentId: String!): Segment
+    getRandomSegment: Segment
   }
 `;

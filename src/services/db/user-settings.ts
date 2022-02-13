@@ -1,29 +1,36 @@
 import { documentClient, tableName } from "./db-utils";
+import { Utils } from "../../utils";
 
 interface UserSettings {
-  metronomeOnSegmentPlay: boolean;
-  notesOnSegmentPlay: boolean;
-  metronomeOnRecord: boolean;
-  notesOnRecord: boolean;
-  metronomeOnRecordingPlay: boolean;
-  notesOnRecordingPlay: boolean;
+  metronomeOnSegmentPlay?: boolean | null;
+  notesOnSegmentPlay?: boolean | null;
+  metronomeOnRecord?: boolean | null;
+  notesOnRecord?: boolean | null;
+  metronomeOnRecordingPlay?: boolean | null;
+  notesOnRecordingPlay?: boolean | null;
 }
 
-export function getUserSettings(userId: string): Promise<UserSettings | null> {
-  return documentClient
+export async function _getUserSettings(userId: string): Promise<UserSettings> {
+  const res = await documentClient
     .get({
       TableName: tableName,
       Key: { PK: userId, SK: userId },
     })
-    .promise()
-    .then((res) => (res.Item ? res.Item.Preferences : null));
+    .promise();
+  if (res.Item) {
+    return res.Item.Preferences;
+  }
+
+  return _upsertUserSettings(userId, { notesOnSegmentPlay: true }, false);
 }
 
-export async function upsertUserSettings(
+export async function _upsertUserSettings(
   userId: string,
-  settings: Partial<UserSettings>
-): Promise<Partial<UserSettings>> {
-  const existing = await getUserSettings(userId);
+  settings: UserSettings,
+  checkExisting = true
+): Promise<UserSettings> {
+  const now = new Date().toISOString();
+  const existing = checkExisting ? await _getUserSettings(userId) : {};
   const Preferences = {
     ...existing,
     ...settings,
@@ -31,7 +38,13 @@ export async function upsertUserSettings(
   await documentClient
     .put({
       TableName: tableName,
-      Item: { PK: userId, SK: userId, Preferences },
+      Item: {
+        PK: userId,
+        SK: userId,
+        Preferences,
+        DateCreated: Utils.objectIsEmpty(existing) ? now : undefined,
+        DateUpdated: now,
+      },
     })
     .promise();
   return Preferences;

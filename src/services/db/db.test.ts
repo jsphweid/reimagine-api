@@ -1,15 +1,7 @@
 import * as AWS from "aws-sdk";
 
+import { DB } from ".";
 import { Utils } from "../../utils";
-import { getMixesByPieceId, getMixesByRecordingId, saveMix } from "./mix";
-import {
-  getRecordingById,
-  getRecordingsBySegmentId,
-  getRecordingsByUserId,
-  saveRecording,
-} from "./recording";
-import { getSegmentById, getSegmentsByPieceId, saveSegment } from "./segment";
-import { upsertUserSettings, getUserSettings } from "./user-settings";
 
 AWS.config.region = "us-west-2";
 
@@ -65,19 +57,19 @@ describe("DB tests", () => {
     const update = { notesOnSegmentPlay: false, notesOnRecord: false };
     const expectedFinalSettings = { ...initialSettings, ...update };
 
-    expect(await getUserSettings(userId)).toBeNull();
+    expect(await DB.getUserSettings(userId)).toBeNull();
 
-    expect(await upsertUserSettings(userId, initialSettings)).toEqual(
+    expect(await DB.upsertUserSettings(userId, initialSettings)).toEqual(
       initialSettings
     );
 
-    expect(await getUserSettings(userId)).toEqual(initialSettings);
+    expect(await DB.getUserSettings(userId)).toEqual(initialSettings);
 
-    expect(await upsertUserSettings(userId, update)).toEqual(
+    expect(await DB.upsertUserSettings(userId, update)).toEqual(
       expectedFinalSettings
     );
 
-    expect(await getUserSettings(userId)).toEqual(expectedFinalSettings);
+    expect(await DB.getUserSettings(userId)).toEqual(expectedFinalSettings);
   });
 
   test("recording", async () => {
@@ -86,6 +78,7 @@ describe("DB tests", () => {
       segmentId: "seg1",
       userId: "user1",
       objectKey: "objectkey1",
+      samplingRate: 44100,
       dateCreated: new Date(),
     };
 
@@ -94,17 +87,18 @@ describe("DB tests", () => {
       segmentId: "seg2",
       userId: null,
       objectKey: "objectkey2",
+      samplingRate: 44100,
       dateCreated: new Date(),
     };
 
-    await saveRecording(rec1);
-    await saveRecording(rec2);
+    await DB.saveRecording(rec1);
+    await DB.saveRecording(rec2);
 
-    expect(await getRecordingById(rec1.id)).toEqual(rec1);
-    expect(await getRecordingById(rec2.id)).toEqual(rec2);
-    expect(await getRecordingsByUserId(rec1.userId)).toEqual([rec1]);
-    expect(await getRecordingsBySegmentId(rec1.segmentId)).toEqual([rec1]);
-    expect(await getRecordingsBySegmentId(rec2.segmentId)).toEqual([rec2]);
+    expect(await DB.getRecordingById(rec1.id)).toEqual(rec1);
+    expect(await DB.getRecordingById(rec2.id)).toEqual(rec2);
+    expect(await DB.getRecordingsByUserId(rec1.userId)).toEqual([rec1]);
+    expect(await DB.getRecordingsBySegmentId(rec1.segmentId)).toEqual([rec1]);
+    expect(await DB.getRecordingsBySegmentId(rec2.segmentId)).toEqual([rec2]);
   });
 
   test("segment", async () => {
@@ -129,16 +123,16 @@ describe("DB tests", () => {
       dateCreated: new Date(),
     };
 
-    await saveSegment(seg1);
-    await saveSegment(seg2);
+    await DB.saveSegment(seg1);
+    await DB.saveSegment(seg2);
 
-    expect(await getSegmentById(seg1.id)).toEqual(seg1);
-    expect(await getSegmentById(seg2.id)).toEqual(seg2);
-    expect(await getSegmentsByPieceId(seg1.pieceId)).toEqual([seg1]);
-    expect(await getSegmentsByPieceId(seg2.pieceId)).toEqual([seg2]);
+    expect(await DB.getSegmentById(seg1.id)).toEqual(seg1);
+    expect(await DB.getSegmentById(seg2.id)).toEqual(seg2);
+    expect(await DB.getSegmentsByPieceId(seg1.pieceId)).toEqual([seg1]);
+    expect(await DB.getSegmentsByPieceId(seg2.pieceId)).toEqual([seg2]);
   });
 
-  test("segment", async () => {
+  test("mix", async () => {
     const mix1 = {
       id: "mix1",
       pieceId: "pieceId1",
@@ -152,14 +146,14 @@ describe("DB tests", () => {
       dateCreated: new Date(),
     };
 
-    await saveMix({ ...mix1, recordingIds: ["r1", "r2", "r3"] });
-    await saveMix({ ...mix2, recordingIds: ["r2", "r3", "r4"] });
+    await DB.saveMix({ ...mix1, recordingIds: ["r1", "r2", "r3"] });
+    await DB.saveMix({ ...mix2, recordingIds: ["r2", "r3", "r4"] });
 
-    expect(await getMixesByPieceId(mix1.pieceId)).toEqual([mix1]);
-    expect(await getMixesByPieceId(mix2.pieceId)).toEqual([mix2]);
-    expect(await getMixesByRecordingId("r1")).toEqual([mix1]);
-    expect(await getMixesByRecordingId("r2")).toEqual([mix1, mix2]);
-    expect(await getMixesByRecordingId("r3")).toEqual([mix1, mix2]);
-    expect(await getMixesByRecordingId("r4")).toEqual([mix2]);
+    expect(await DB.getMixesByPieceId(mix1.pieceId)).toEqual([mix1]);
+    expect(await DB.getMixesByPieceId(mix2.pieceId)).toEqual([mix2]);
+    expect(await DB.getMixesByRecordingId("r1")).toEqual([mix1]);
+    expect(await DB.getMixesByRecordingId("r2")).toEqual([mix1, mix2]);
+    expect(await DB.getMixesByRecordingId("r3")).toEqual([mix1, mix2]);
+    expect(await DB.getMixesByRecordingId("r4")).toEqual([mix2]);
   });
 });

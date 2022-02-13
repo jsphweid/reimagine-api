@@ -5,6 +5,7 @@ export interface Recording {
   segmentId: string;
   userId: string | null;
   objectKey: string;
+  samplingRate: number;
   dateCreated: Date;
 }
 
@@ -13,12 +14,13 @@ function mapRecording(item: any): Recording {
     id: item["PK"],
     userId: item["GSI2-PK"] || null,
     segmentId: item["GSI1-PK"],
+    samplingRate: item["SamplingRate"],
     objectKey: item["ObjectKey"],
     dateCreated: new Date(item["DateCreated"]),
   };
 }
 
-export async function getRecordingById(
+export async function _getRecordingById(
   recordingId: string
 ): Promise<Recording | null> {
   return documentClient
@@ -30,7 +32,7 @@ export async function getRecordingById(
     .then((res) => (res.Item ? mapRecording(res.Item) : null));
 }
 
-export async function saveRecording(recording: Recording): Promise<Recording> {
+export async function _saveRecording(recording: Recording): Promise<Recording> {
   const date = recording.dateCreated.toISOString();
   return documentClient
     .put({
@@ -41,6 +43,7 @@ export async function saveRecording(recording: Recording): Promise<Recording> {
         Type: "Recording",
         DateCreated: date,
         ObjectKey: recording.objectKey,
+        SamplingRate: recording.samplingRate,
         "GSI1-PK": recording.segmentId,
         "GSI1-SK": `Recording#${date}#${recording.id}`,
         "GSI2-PK": recording.userId || undefined,
@@ -50,7 +53,7 @@ export async function saveRecording(recording: Recording): Promise<Recording> {
     .then(() => recording);
 }
 
-export async function getRecordingsByUserId(
+export async function _getRecordingsByUserId(
   userId: string
 ): Promise<Recording[]> {
   // TODO: handle pagination
@@ -74,7 +77,7 @@ export async function getRecordingsByUserId(
     });
 }
 
-export async function getRecordingsBySegmentId(
+export async function _getRecordingsBySegmentId(
   segmentId: string
 ): Promise<Recording[]> {
   // TODO: handle pagination

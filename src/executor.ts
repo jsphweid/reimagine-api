@@ -1,10 +1,10 @@
 const ADMIN_PERMISSION = "reimagine:admin";
 
 import { verifyToken } from "./auth";
-import { ForbiddenError } from "./error";
+import { ForbiddenError, UnauthenticatedError } from "./error";
 
 class Executor {
-  private userId: string;
+  public readonly userId: string;
   private permissions: string[];
 
   public constructor(userId: string, permissions: string[]) {
@@ -15,7 +15,6 @@ class Executor {
   public static fromToken(token: string): Promise<Executor | null> {
     return verifyToken(token)
       .then((parsed) => {
-        console.log("parsed!", parsed);
         return new Executor(parsed.sub, parsed.permissions || []);
       })
       .catch(() => {
@@ -31,9 +30,32 @@ class Executor {
     return this.hasPermission(ADMIN_PERMISSION);
   }
 
+  public static run(executor: Executor | null, fn: (e: Executor) => void) {
+    fn(Executor.assertExists(executor));
+  }
+
+  public static assertExists(executor: Executor | null): Executor {
+    if (!executor) {
+      throw new UnauthenticatedError();
+    }
+    return executor;
+  }
+
   public assertIsAdmin(): void {
     if (!this.isAdmin()) {
       throw new ForbiddenError("You must be an admin!");
+    }
+  }
+
+  public assertUserId(userId: string): void {
+    if (this.userId !== userId) {
+      throw new ForbiddenError();
+    }
+  }
+
+  public assertUserIdOrAdmin(userId: string): void {
+    if (!this.isAdmin() && this.userId !== userId) {
+      throw new ForbiddenError();
     }
   }
 }

@@ -45,7 +45,9 @@ export class ReimagineStack extends cdk.Stack {
       indexName: "GSI4",
     });
 
-    const bucket = new s3.Bucket(this, "Bucket");
+    const bucket = new s3.Bucket(this, "Bucket", {
+      bucketName: "reimagine-files-bucket",
+    });
 
     // Graphql Lambda that allows one to interact with the DB
     const apiLambda = new lambda.Function(this, "ApiLambda", {

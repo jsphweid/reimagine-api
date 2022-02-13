@@ -17,7 +17,7 @@ function mapMix(item: any): Mix {
   };
 }
 
-export async function saveMix(
+export async function _saveMix(
   mix: Mix & { recordingIds: string[] }
 ): Promise<Mix> {
   // TODO: error handling
@@ -66,7 +66,7 @@ export async function saveMix(
   return mix;
 }
 
-export async function getMixesByPieceId(pieceId: string): Promise<Mix[]> {
+export async function _getMixesByPieceId(pieceId: string): Promise<Mix[]> {
   // TODO: handle pagination
   return documentClient
     .query({
@@ -87,7 +87,7 @@ export async function getMixesByPieceId(pieceId: string): Promise<Mix[]> {
     .then((res) => (res.Items ? res.Items.map(mapMix) : []));
 }
 
-export async function getMixesByRecordingId(
+export async function _getMixesByRecordingId(
   recordingId: string
 ): Promise<Mix[]> {
   // TODO: handle pagination
