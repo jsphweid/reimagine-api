@@ -53,23 +53,19 @@ describe("DB tests", () => {
 
   test("userSettings", async () => {
     const userId = "abc123";
-    const initialSettings = { notesOnSegmentPlay: true };
     const update = { notesOnSegmentPlay: false, notesOnRecord: false };
-    const expectedFinalSettings = { ...initialSettings, ...update };
 
-    expect(await DB.getUserSettings(userId)).toBeNull();
+    // should retrieve the default response since it doesn't exist
+    expect(await DB.getUserSettings(userId)).toEqual({
+      notesOnSegmentPlay: true,
+    });
 
-    expect(await DB.upsertUserSettings(userId, initialSettings)).toEqual(
-      initialSettings
-    );
+    const combined = { notesOnRecordingPlay: true, notesOnSegmentPlay: true };
+    expect(
+      await DB.upsertUserSettings(userId, { notesOnRecordingPlay: true })
+    ).toEqual(combined);
 
-    expect(await DB.getUserSettings(userId)).toEqual(initialSettings);
-
-    expect(await DB.upsertUserSettings(userId, update)).toEqual(
-      expectedFinalSettings
-    );
-
-    expect(await DB.getUserSettings(userId)).toEqual(expectedFinalSettings);
+    expect(await DB.getUserSettings(userId)).toEqual(combined);
   });
 
   test("recording", async () => {
@@ -104,7 +100,7 @@ describe("DB tests", () => {
   test("segment", async () => {
     const seg1 = {
       id: "seg1",
-      pieceId: "piece1",
+      arrangementId: "arrangement1",
       lowestNote: 1,
       highestNote: 2,
       difficulty: 3,
@@ -114,7 +110,7 @@ describe("DB tests", () => {
     };
     const seg2 = {
       id: "seg2",
-      pieceId: "piece2",
+      arrangementId: "arrangement2",
       lowestNote: 2,
       highestNote: 3,
       difficulty: 4,
@@ -128,20 +124,24 @@ describe("DB tests", () => {
 
     expect(await DB.getSegmentById(seg1.id)).toEqual(seg1);
     expect(await DB.getSegmentById(seg2.id)).toEqual(seg2);
-    expect(await DB.getSegmentsByPieceId(seg1.pieceId)).toEqual([seg1]);
-    expect(await DB.getSegmentsByPieceId(seg2.pieceId)).toEqual([seg2]);
+    expect(await DB.getSegmentsByArrangementId(seg1.arrangementId)).toEqual([
+      seg1,
+    ]);
+    expect(await DB.getSegmentsByArrangementId(seg2.arrangementId)).toEqual([
+      seg2,
+    ]);
   });
 
   test("mix", async () => {
     const mix1 = {
       id: "mix1",
-      pieceId: "pieceId1",
+      arrangementId: "arrangementId1",
       objectKey: "objectKey1",
       dateCreated: new Date(),
     };
     const mix2 = {
       id: "mix2",
-      pieceId: "pieceId2",
+      arrangementId: "arrangementId2",
       objectKey: "objectKey2",
       dateCreated: new Date(),
     };
@@ -149,11 +149,56 @@ describe("DB tests", () => {
     await DB.saveMix({ ...mix1, recordingIds: ["r1", "r2", "r3"] });
     await DB.saveMix({ ...mix2, recordingIds: ["r2", "r3", "r4"] });
 
-    expect(await DB.getMixesByPieceId(mix1.pieceId)).toEqual([mix1]);
-    expect(await DB.getMixesByPieceId(mix2.pieceId)).toEqual([mix2]);
+    expect(await DB.getMixesByArrangementId(mix1.arrangementId)).toEqual([
+      mix1,
+    ]);
+    expect(await DB.getMixesByArrangementId(mix2.arrangementId)).toEqual([
+      mix2,
+    ]);
     expect(await DB.getMixesByRecordingId("r1")).toEqual([mix1]);
     expect(await DB.getMixesByRecordingId("r2")).toEqual([mix1, mix2]);
     expect(await DB.getMixesByRecordingId("r3")).toEqual([mix1, mix2]);
     expect(await DB.getMixesByRecordingId("r4")).toEqual([mix2]);
+  });
+
+  test("arrangement", async () => {
+    const arr1 = {
+      id: "arr1",
+      pieceId: "pieceId1",
+      dateCreated: new Date(),
+    };
+    const arr2 = {
+      id: "arr2",
+      pieceId: "pieceId2",
+      dateCreated: new Date(),
+    };
+
+    await DB.saveArrangement(arr1);
+    await DB.saveArrangement(arr2);
+
+    expect(await DB.getArrangementById(arr1.id)).toEqual(arr1);
+    expect(await DB.getArrangementById(arr2.id)).toEqual(arr2);
+    expect(await DB.getArrangementsByPieceId(arr1.pieceId)).toEqual([arr1]);
+    expect(await DB.getArrangementsByPieceId(arr2.pieceId)).toEqual([arr2]);
+  });
+
+  test("piece", async () => {
+    const piece1 = { id: "piece1", dateCreated: new Date() };
+    const piece2 = { id: "piece2", dateCreated: new Date() };
+
+    await DB.savePiece(piece1);
+    await DB.savePiece(piece2);
+
+    // make sure there is at least something else in DB
+    await DB.saveArrangement({
+      id: "mix2",
+      pieceId: piece1.id,
+      dateCreated: new Date(),
+    });
+
+    const res = await DB.getAllPieces();
+    expect(res).toHaveLength(2);
+    expect(res).toContainEqual(piece1);
+    expect(res).toContainEqual(piece2);
   });
 });

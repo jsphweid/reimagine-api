@@ -21,12 +21,22 @@ export const resolvers: Resolvers = {
       Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
       return DB.getUserSettings(args.userId);
     },
-    getMixesByPieceId: async (_, args) => {
-      const mixes = await DB.getMixesByPieceId(args.pieceId);
+    getMixesByArrangementId: async (_, args) => {
+      const mixes = await DB.getMixesByArrangementId(args.arrangementId);
       return mixes.map(mapDateCreated);
     },
     getMixesByRecordingId: async (_, args) => {
       const res = await DB.getMixesByRecordingId(args.recordingId);
+      return res.map(mapDateCreated);
+    },
+    getArrangementsByPieceId: async (_, args) => {
+      const res = await DB.getArrangementsByPieceId(args.pieceId);
+      return res.map(mapDateCreated);
+    },
+    getArrangementByIds: async (_, args) => {
+      const res = await Promise.all(
+        args.arrangementIds.map(DB.getArrangementById)
+      );
       return res.map(mapDateCreated);
     },
     getRecordingsByIds: async (_, args) => {
@@ -41,6 +51,10 @@ export const resolvers: Resolvers = {
     getSegmentById: async (_, args) => {
       const res = await DB.getSegmentById(args.segmentId);
       return res ? mapDateCreated(res) : null;
+    },
+    getAllPieces: async () => {
+      const res = await DB.getAllPieces();
+      return res ? res.map(mapDateCreated) : [];
     },
   },
   Mutation: {

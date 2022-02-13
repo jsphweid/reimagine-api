@@ -2,7 +2,7 @@ import { documentClient, tableName } from "./db-utils";
 
 interface Segment {
   id: string;
-  pieceId: string;
+  arrangementId: string;
   lowestNote: number;
   highestNote: number;
   difficulty: number;
@@ -14,7 +14,7 @@ interface Segment {
 function mapSegment(item: any): Segment {
   return {
     id: item["PK"],
-    pieceId: item["GSI1-PK"],
+    arrangementId: item["GSI1-PK"],
     lowestNote: item["Analysis"]["LowestNote"],
     highestNote: item["Analysis"]["HighestNote"],
     difficulty: item["Analysis"]["Difficulty"],
@@ -41,7 +41,7 @@ export async function _saveSegment(segment: Segment): Promise<Segment> {
         },
         MidiJson: segment.midiJson,
         OffsetTime: segment.offsetTime,
-        "GSI1-PK": segment.pieceId,
+        "GSI1-PK": segment.arrangementId,
         "GSI1-SK": `Segment#${date}#${segment.id}`,
       },
     })
@@ -65,8 +65,8 @@ export async function _getRandomSegment() {
   // TODO: implement
 }
 
-export async function _getSegmentsByPieceId(
-  pieceId: string
+export async function _getSegmentsByArrangementId(
+  arrangementId: string
 ): Promise<Segment[]> {
   // TODO: handle pagination
   return documentClient
@@ -74,13 +74,13 @@ export async function _getSegmentsByPieceId(
       TableName: tableName,
       IndexName: "GSI1",
       KeyConditionExpression:
-        "#PK = :pieceId and begins_with(#SK, :startsWith)",
+        "#PK = :arrangementId and begins_with(#SK, :startsWith)",
       ExpressionAttributeNames: {
         "#PK": "GSI1-PK",
         "#SK": "GSI1-SK",
       },
       ExpressionAttributeValues: {
-        ":pieceId": pieceId,
+        ":arrangementId": arrangementId,
         ":startsWith": "Segment#",
       },
     })

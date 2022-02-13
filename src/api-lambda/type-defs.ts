@@ -31,6 +31,17 @@ export const typeDefs = gql`
     dateCreated: String
   }
 
+  type Arrangement {
+    id: String
+    pieceId: String
+    dateCreated: String
+  }
+
+  type Piece {
+    id: String
+    dateCreated: String
+  }
+
   type UserSettings {
     metronomeOnSegmentPlay: Boolean
     notesOnSegmentPlay: Boolean
@@ -68,8 +79,11 @@ export const typeDefs = gql`
     getUserSettingsByUserId(userId: String!): UserSettings
     getRecordingsByIds(recordingIds: [String!]!): [Recording]
     getRecordingsByUserId(userId: String!): [Recording]
-    getMixesByPieceId(pieceId: String!): [Mix]
+    getMixesByArrangementId(arrangementId: String!): [Mix]
     getMixesByRecordingId(recordingId: String!): [Mix]
+    getArrangementByIds(arrangementIds: [String!]!): [Arrangement]
+    getArrangementsByPieceId(pieceId: String!): [Arrangement]
+    getAllPieces: [Piece]
 
     # not passing a segmentId returns a random segment...
     getSegmentById(segmentId: String!): Segment
