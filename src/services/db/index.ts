@@ -1,4 +1,5 @@
 import {
+  _deleteArrangementById,
   _getArrangementById,
   _getArrangementsByPieceId,
   _saveArrangement,
@@ -16,10 +17,11 @@ import {
   _saveRecording,
 } from "./recording";
 import {
+  _deleteSegmentsByArrangementId,
   _getRandomSegment,
   _getSegmentById,
   _getSegmentsByArrangementId,
-  _saveSegment,
+  _saveSegments,
 } from "./segment";
 import { _getUserSettings, _upsertUserSettings } from "./user-settings";
 
@@ -31,10 +33,11 @@ export namespace DB {
   export const getUserSettings = _getUserSettings;
   export const upsertUserSettings = _upsertUserSettings;
 
-  export const saveSegment = _saveSegment;
+  export const saveSegments = _saveSegments;
   export const getSegmentById = _getSegmentById;
   export const getRandomSegment = _getRandomSegment;
   export const getSegmentsByArrangementId = _getSegmentsByArrangementId;
+  export const deleteSegmentsByArrangementId = _deleteSegmentsByArrangementId;
 
   export const getRecordingById = _getRecordingById;
   export const saveRecording = _saveRecording;
@@ -44,6 +47,7 @@ export namespace DB {
   export const getArrangementsByPieceId = _getArrangementsByPieceId;
   export const saveArrangement = _saveArrangement;
   export const getArrangementById = _getArrangementById;
+  export const deleteArrangementById = _deleteArrangementById;
 
   export const getAllPieces = _getAllPieces;
   export const savePiece = _savePiece;

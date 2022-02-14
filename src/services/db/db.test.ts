@@ -2,6 +2,7 @@ import * as AWS from "aws-sdk";
 
 import { DB } from ".";
 import { Utils } from "../../utils";
+import { Midi } from "@tonejs/midi";
 
 AWS.config.region = "us-west-2";
 
@@ -104,8 +105,8 @@ describe("DB tests", () => {
       lowestNote: 1,
       highestNote: 2,
       difficulty: 3,
-      midiJson: "{}",
-      offsetTime: 1.111,
+      midiJson: new Midi(),
+      offset: 1.111,
       dateCreated: new Date(),
     };
     const seg2 = {
@@ -114,13 +115,12 @@ describe("DB tests", () => {
       lowestNote: 2,
       highestNote: 3,
       difficulty: 4,
-      midiJson: "{}",
-      offsetTime: 2.222,
+      midiJson: new Midi(),
+      offset: 2.222,
       dateCreated: new Date(),
     };
 
-    await DB.saveSegment(seg1);
-    await DB.saveSegment(seg2);
+    await DB.saveSegments([seg1, seg2]);
 
     expect(await DB.getSegmentById(seg1.id)).toEqual(seg1);
     expect(await DB.getSegmentById(seg2.id)).toEqual(seg2);
@@ -173,8 +173,19 @@ describe("DB tests", () => {
       dateCreated: new Date(),
     };
 
-    await DB.saveArrangement(arr1);
-    await DB.saveArrangement(arr2);
+    const seg1 = {
+      id: "seg1",
+      arrangementId: "arrangement1",
+      lowestNote: 1,
+      highestNote: 2,
+      difficulty: 3,
+      midiJson: new Midi(),
+      offset: 1.111,
+      dateCreated: new Date(),
+    };
+
+    await DB.saveArrangement(arr1, [seg1]);
+    await DB.saveArrangement(arr2, [seg1]);
 
     expect(await DB.getArrangementById(arr1.id)).toEqual(arr1);
     expect(await DB.getArrangementById(arr2.id)).toEqual(arr2);
@@ -183,18 +194,21 @@ describe("DB tests", () => {
   });
 
   test("piece", async () => {
-    const piece1 = { id: "piece1", dateCreated: new Date() };
-    const piece2 = { id: "piece2", dateCreated: new Date() };
+    const piece1 = { id: "piece1", dateCreated: new Date(), name: "p1" };
+    const piece2 = { id: "piece2", dateCreated: new Date(), name: "p2" };
 
     await DB.savePiece(piece1);
     await DB.savePiece(piece2);
 
     // make sure there is at least something else in DB
-    await DB.saveArrangement({
-      id: "mix2",
-      pieceId: piece1.id,
-      dateCreated: new Date(),
-    });
+    await DB.saveArrangement(
+      {
+        id: "mix2",
+        pieceId: piece1.id,
+        dateCreated: new Date(),
+      },
+      []
+    );
 
     const res = await DB.getAllPieces();
     expect(res).toHaveLength(2);

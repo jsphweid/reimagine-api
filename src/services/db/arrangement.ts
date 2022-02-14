@@ -1,4 +1,7 @@
+import { DB } from ".";
+import { Utils } from "../../utils";
 import { documentClient, tableName } from "./db-utils";
+import { Segment } from "./segment";
 
 interface Arrangement {
   id: string;
@@ -15,7 +18,8 @@ function mapArrangement(item: any): Arrangement {
 }
 
 export async function _saveArrangement(
-  arrangement: Arrangement
+  arrangement: Arrangement,
+  segments: Segment[]
 ): Promise<Arrangement> {
   const date = arrangement.dateCreated.toISOString();
   await documentClient
@@ -31,7 +35,15 @@ export async function _saveArrangement(
       },
     })
     .promise();
+
+  await DB.saveSegments(segments);
   return arrangement;
+}
+
+export async function _deleteArrangementById(arrangementId: string) {
+  // TODO: should this delete the segments?
+  const key = { PK: arrangementId, SK: arrangementId };
+  await Utils.dynamoDbBatchDelete(tableName, [key]);
 }
 
 export async function _getArrangementById(

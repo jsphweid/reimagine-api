@@ -14,7 +14,7 @@ export const typeDefs = gql`
     pieceId: String
     difficulty: Int
     midiJson: String
-    offsetTime: Float
+    offset: Float
     dateCreated: String
   }
 
@@ -39,6 +39,7 @@ export const typeDefs = gql`
 
   type Piece {
     id: String
+    name: String
     dateCreated: String
   }
 
@@ -63,13 +64,15 @@ export const typeDefs = gql`
   type Mutation {
     updateUserSettings(userId: String!, input: UserSettingsInput!): UserSettings
 
-    postRecording(
+    createRecording(
       base64Blob: String!
       segmentId: String!
       samplingRate: Int!
     ): Recording
 
-    # postMidi(fileBuffers: [String!]!): [String]
+    createPiece(name: String!): Piece
+    createSimpleArrangement(pieceId: String!, base64Blob: String!): Arrangement
+    deleteArrangement(arrangementId: String!): String
     # createMixFromRecordingFragments(
     #   recordings: [RecordingFragmentSpec]!
     # ): String

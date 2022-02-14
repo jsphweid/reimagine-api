@@ -17,6 +17,18 @@ function mapMix(item: any): Mix {
   };
 }
 
+function mapMixToDbItem(mix: Mix, recordingId: string, date: string) {
+  return {
+    PK: recordingId,
+    SK: `Mix#${date}#${mix.id}`,
+    "GSI1-PK": mix.id,
+    "GSI1-SK": recordingId,
+    // manually project these below for easy retrieval later
+    ArrangementId: mix.arrangementId,
+    ObjectKey: mix.objectKey,
+  };
+}
+
 export async function _saveMix(
   mix: Mix & { recordingIds: string[] }
 ): Promise<Mix> {
@@ -38,31 +50,8 @@ export async function _saveMix(
       },
     })
     .promise();
-
-  await Promise.all(
-    Utils.chunkArray(mix.recordingIds, 25).map((recordingIds) =>
-      documentClient
-        .batchWrite({
-          RequestItems: {
-            [tableName]: recordingIds.map((recordingId) => ({
-              PutRequest: {
-                Item: {
-                  PK: recordingId,
-                  SK: `Mix#${date}#${mix.id}`,
-                  "GSI1-PK": mix.id,
-                  "GSI1-SK": recordingId,
-                  // manually project these below for easy retrieval later
-                  ArrangementId: mix.arrangementId,
-                  ObjectKey: mix.objectKey,
-                },
-              },
-            })),
-          },
-        })
-        .promise()
-    )
-  );
-
+  const items = mix.recordingIds.map((id) => mapMixToDbItem(mix, id, date));
+  await Utils.dynamoDbBatchWrite(tableName, items);
   return mix;
 }
 

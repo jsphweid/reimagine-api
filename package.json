@@ -18,7 +18,7 @@
     "jsonwebtoken": "^8.5.1",
     "jwks-rsa": "^2.0.5",
     "md5": "^2.2.1",
-    "midi-segmentizer": "0.0.6",
+    "midi-segmentizer": "^1.0.0",
     "node-wav": "0.0.2"
   },
   "devDependencies": {

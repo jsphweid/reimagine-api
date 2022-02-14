@@ -2,6 +2,7 @@ import { documentClient, tableName } from "./db-utils";
 
 interface Piece {
   id: string;
+  name: string;
   dateCreated: Date;
 }
 
@@ -14,6 +15,7 @@ export async function _savePiece(piece: Piece): Promise<Piece> {
         PK: piece.id,
         SK: piece.id,
         Type: "Piece",
+        PieceName: piece.name,
         DateCreated: date,
       },
     })
@@ -39,6 +41,7 @@ export async function _getAllPieces(): Promise<Piece[]> {
       res.Items
         ? res.Items.map((item) => ({
             id: item.PK,
+            name: item.PieceName,
             dateCreated: new Date(item.DateCreated),
           }))
         : []

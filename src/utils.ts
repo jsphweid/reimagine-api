@@ -1,3 +1,6 @@
+import { Midi } from "@tonejs/midi";
+import { documentClient } from "./services/db/db-utils";
+
 export namespace Utils {
   export const chunkArray = <T>(arr: T[], size: number): T[][] => {
     const ret: T[][] = [];
@@ -45,4 +48,64 @@ export namespace Utils {
       Object.getPrototypeOf(obj) === Object.prototype
     );
   };
+
+  export function midiToJsonString(midi: Midi): string {
+    return JSON.stringify(midi.toJSON());
+  }
+
+  export function jsonStringToMidi(str: string): Midi {
+    const midiJson = new Midi();
+    midiJson.fromJSON(JSON.parse(str));
+    return midiJson;
+  }
+
+  export function serialize<T extends { dateCreated?: Date; midiJson?: Midi }>(
+    obj: T | null
+  ) {
+    return obj
+      ? {
+          ...obj,
+          dateCreated: obj.dateCreated
+            ? obj.dateCreated.toISOString()
+            : undefined,
+          midiJson: obj.midiJson ? midiToJsonString(obj.midiJson) : undefined,
+        }
+      : null;
+  }
+
+  export function dynamoDbBatchWrite(table: string, items: any[]) {
+    return Promise.all(
+      Utils.chunkArray(items, 25).map((batch) =>
+        documentClient
+          .batchWrite({
+            RequestItems: {
+              [table]: batch.map((item) => ({
+                PutRequest: {
+                  Item: item,
+                },
+              })),
+            },
+          })
+          .promise()
+      )
+    );
+  }
+
+  export function dynamoDbBatchDelete(table: string, keys: {}[]) {
+    return Promise.all(
+      Utils.chunkArray(keys, 25).map((batch) =>
+        documentClient
+          .batchWrite({
+            RequestItems: {
+              [table]: batch.map((key) => ({
+                DeleteRequest: {
+                  Key: key,
+                },
+              })),
+            },
+          })
+          .promise()
+      )
+    );
+  }
 }

@@ -1,13 +1,16 @@
+import { Midi } from "@tonejs/midi";
+
+import { Utils } from "../../utils";
 import { documentClient, tableName } from "./db-utils";
 
-interface Segment {
+export interface Segment {
   id: string;
   arrangementId: string;
   lowestNote: number;
   highestNote: number;
-  difficulty: number;
-  midiJson: string;
-  offsetTime: number;
+  difficulty?: number | null;
+  midiJson: Midi;
+  offset: number;
   dateCreated: Date;
 }
 
@@ -18,35 +21,44 @@ function mapSegment(item: any): Segment {
     lowestNote: item["Analysis"]["LowestNote"],
     highestNote: item["Analysis"]["HighestNote"],
     difficulty: item["Analysis"]["Difficulty"],
-    midiJson: item["MidiJson"],
-    offsetTime: item["OffsetTime"],
+    midiJson: Utils.jsonStringToMidi(item["MidiJson"]),
+    offset: item["OffsetTime"],
     dateCreated: new Date(item["DateCreated"]),
   };
 }
 
-export async function _saveSegment(segment: Segment): Promise<Segment> {
+function mapSegmentToDbItem(segment: Segment) {
   const date = segment.dateCreated.toISOString();
-  return documentClient
-    .put({
-      TableName: tableName,
-      Item: {
-        PK: segment.id,
-        SK: segment.id,
-        Type: "Segment",
-        DateCreated: date,
-        Analysis: {
-          LowestNote: segment.lowestNote,
-          HighestNote: segment.highestNote,
-          Difficulty: segment.difficulty,
-        },
-        MidiJson: segment.midiJson,
-        OffsetTime: segment.offsetTime,
-        "GSI1-PK": segment.arrangementId,
-        "GSI1-SK": `Segment#${date}#${segment.id}`,
-      },
-    })
-    .promise()
-    .then(() => segment);
+  return {
+    PK: segment.id,
+    SK: segment.id,
+    Type: "Segment",
+    DateCreated: date,
+    Analysis: {
+      LowestNote: segment.lowestNote,
+      HighestNote: segment.highestNote,
+      Difficulty: segment.difficulty,
+    },
+    MidiJson: Utils.midiToJsonString(segment.midiJson),
+    OffsetTime: segment.offset,
+    "GSI1-PK": segment.arrangementId,
+    "GSI1-SK": `Segment#${date}#${segment.id}`,
+  };
+}
+
+export async function _saveSegments(segments: Segment[]): Promise<Segment[]> {
+  const items = segments.map(mapSegmentToDbItem);
+  try {
+    await Utils.dynamoDbBatchWrite(tableName, items);
+  } catch (e) {
+    console.info("Couldn't batch save segments... reverting by deleting any");
+    console.info(e);
+    const keys = segments.map(({ id }) => ({ PK: id, SK: id }));
+    await Utils.dynamoDbBatchDelete(tableName, keys);
+    console.info("Revert successful");
+    throw new Error("Could not save segments!");
+  }
+  return segments;
 }
 
 export async function _getSegmentById(
@@ -63,6 +75,13 @@ export async function _getSegmentById(
 
 export async function _getRandomSegment() {
   // TODO: implement
+}
+
+export async function _deleteSegmentsByArrangementId(arrangementId: string) {
+  // TODO: write tests
+  const segments = await _getSegmentsByArrangementId(arrangementId);
+  const keys = segments.map((s) => ({ PK: s.id, SK: s.id }));
+  await Utils.dynamoDbBatchDelete(tableName, keys);
 }
 
 export async function _getSegmentsByArrangementId(
