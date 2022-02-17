@@ -47,6 +47,11 @@ export const resolvers: Resolvers = {
       const res = await DB.getAllPieces();
       return res ? res.map(Utils.serialize) : [];
     },
+    getNextSegment: async () => {
+      // TODO: rate limit somehow
+      const res = await DB.getNextSegment();
+      return Utils.serialize(res);
+    },
   },
   Mutation: {
     updateUserSettings: (_, args, context) => {

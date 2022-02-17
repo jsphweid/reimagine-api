@@ -11,6 +11,7 @@ export interface Segment {
   difficulty?: number | null;
   midiJson: Midi;
   offset: number;
+  numRecordings?: number;
   dateCreated: Date;
 }
 
@@ -23,6 +24,7 @@ function mapSegment(item: any): Segment {
     difficulty: item["Analysis"]["Difficulty"],
     midiJson: Utils.jsonStringToMidi(item["MidiJson"]),
     offset: item["OffsetTime"],
+    numRecordings: item["RecordingCount"],
     dateCreated: new Date(item["DateCreated"]),
   };
 }
@@ -41,6 +43,7 @@ function mapSegmentToDbItem(segment: Segment) {
     },
     MidiJson: Utils.midiToJsonString(segment.midiJson),
     OffsetTime: segment.offset,
+    RecordingCount: 0,
     "GSI1-PK": segment.arrangementId,
     "GSI1-SK": `Segment#${date}#${segment.id}`,
   };
@@ -58,7 +61,7 @@ export async function _saveSegments(segments: Segment[]): Promise<Segment[]> {
     console.info("Revert successful");
     throw new Error("Could not save segments!");
   }
-  return segments;
+  return items.map(mapSegment);
 }
 
 export async function _getSegmentById(
@@ -73,8 +76,40 @@ export async function _getSegmentById(
     .then((res) => (res.Item ? mapSegment(res.Item) : null));
 }
 
-export async function _getRandomSegment() {
-  // TODO: implement
+export async function _getNextSegment(): Promise<Segment> {
+  // uses a sparse index to get a segment that hasn't been recorded much
+  // NOTE: for now we'll just assume this always works
+  // TODO: this whole system of choosing the next segment could be independent
+  let i = 0;
+  let segment: Segment | null = null;
+  while (true) {
+    if (i > 100) {
+      throw new Error("Couldn't find a new segment in enough tries.");
+    }
+    if (segment) {
+      return segment;
+    }
+    await documentClient
+      .scan({
+        TableName: tableName,
+        IndexName: "GSI3",
+        FilterExpression: "#col = :val",
+        ExpressionAttributeNames: {
+          "#col": "RecordingCount",
+        },
+        ExpressionAttributeValues: {
+          ":val": i,
+        },
+      })
+      .promise()
+      .then((res) => {
+        if (res.Items?.length) {
+          const randomItem = Utils.pickRandom(res.Items);
+          segment = mapSegment(randomItem);
+        }
+      });
+    i++;
+  }
 }
 
 export async function _deleteSegmentsByArrangementId(arrangementId: string) {

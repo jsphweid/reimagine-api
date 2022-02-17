@@ -38,6 +38,9 @@ export namespace Utils {
 
   export const isInt = (n: any): boolean => Number(n) === n && n % 1 === 0;
 
+  export const pickRandom = <T>(arr: T[]): T =>
+    arr[Math.floor(Math.random() * arr.length)];
+
   // .filter(Utils.isTruthy) is a type-safe version of .filter(Boolean)
   export const isTruthy = <T>(item: T | null | undefined): item is T => !!item;
 

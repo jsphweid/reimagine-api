@@ -1,46 +1,41 @@
 import { gql } from "apollo-server-lambda";
 
 export const typeDefs = gql`
-  # type RecordingFragmentSpec {
-  #   recordingId: String!
-  #   startTime: Float
-  #   endTime: Float
-  #   offsetTime: Float
-  # }
-
   type Segment {
-    id: String
-    humanHash: String
-    pieceId: String
+    id: String!
+    arrangementId: String!
     difficulty: Int
-    midiJson: String
+    midiJson: String!
     offset: Float
-    dateCreated: String
+    highestNote: Int
+    lowestNote: Int
+    dateCreated: String!
   }
 
   type Recording {
-    id: String
-    segmentId: String
+    id: String!
+    segmentId: String!
     objectKey: String
-    dateCreated: String
+    dateCreated: String!
   }
 
   type Mix {
-    id: String
+    id: String!
     url: String
-    dateCreated: String
+    dateCreated: String!
   }
 
   type Arrangement {
-    id: String
-    pieceId: String
-    dateCreated: String
+    id: String!
+    name: String
+    pieceId: String!
+    dateCreated: String!
   }
 
   type Piece {
-    id: String
+    id: String!
     name: String
-    dateCreated: String
+    dateCreated: String!
   }
 
   type UserSettings {
@@ -90,6 +85,6 @@ export const typeDefs = gql`
 
     # not passing a segmentId returns a random segment...
     getSegmentById(segmentId: String!): Segment
-    getRandomSegment: Segment
+    getNextSegment: Segment
   }
 `;

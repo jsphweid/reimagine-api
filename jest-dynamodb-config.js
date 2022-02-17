@@ -9,6 +9,7 @@ module.exports = {
         { AttributeName: "GSI1-PK", AttributeType: "S" },
         { AttributeName: "GSI1-SK", AttributeType: "S" },
         { AttributeName: "GSI2-PK", AttributeType: "S" },
+        { AttributeName: "RecordingCount", AttributeType: "N" },
       ],
       TableName: process.env.DYNAMODB_TABLE_NAME,
       KeySchema: [
@@ -37,6 +38,18 @@ module.exports = {
           KeySchema: [
             { AttributeName: "GSI1-PK", KeyType: "HASH" },
             { AttributeName: "GSI1-SK", KeyType: "RANGE" },
+          ],
+          Projection: { ProjectionType: "ALL" },
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          },
+        },
+        {
+          IndexName: "GSI3",
+          KeySchema: [
+            { AttributeName: "RecordingCount", KeyType: "HASH" },
+            { AttributeName: "SK", KeyType: "RANGE" },
           ],
           Projection: { ProjectionType: "ALL" },
           ProvisionedThroughput: {

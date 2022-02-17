@@ -18,7 +18,7 @@ import {
 } from "./recording";
 import {
   _deleteSegmentsByArrangementId,
-  _getRandomSegment,
+  _getNextSegment,
   _getSegmentById,
   _getSegmentsByArrangementId,
   _saveSegments,
@@ -35,7 +35,7 @@ export namespace DB {
 
   export const saveSegments = _saveSegments;
   export const getSegmentById = _getSegmentById;
-  export const getRandomSegment = _getRandomSegment;
+  export const getNextSegment = _getNextSegment;
   export const getSegmentsByArrangementId = _getSegmentsByArrangementId;
   export const deleteSegmentsByArrangementId = _deleteSegmentsByArrangementId;
 

@@ -33,21 +33,37 @@ export async function _getRecordingById(
 }
 
 export async function _saveRecording(recording: Recording): Promise<Recording> {
+  // TODO: add transact write and bump segment record count by 1
   const date = recording.dateCreated.toISOString();
+
   return documentClient
-    .put({
-      TableName: tableName,
-      Item: {
-        PK: recording.id,
-        SK: recording.id,
-        Type: "Recording",
-        DateCreated: date,
-        ObjectKey: recording.objectKey,
-        SamplingRate: recording.samplingRate,
-        "GSI1-PK": recording.segmentId,
-        "GSI1-SK": `Recording#${date}#${recording.id}`,
-        "GSI2-PK": recording.userId || undefined,
-      },
+    .transactWrite({
+      TransactItems: [
+        {
+          Update: {
+            TableName: tableName,
+            Key: { PK: recording.segmentId, SK: recording.segmentId },
+            ExpressionAttributeValues: { ":inc": 1 },
+            UpdateExpression: "ADD RecordingCount :inc",
+          },
+        },
+        {
+          Put: {
+            TableName: tableName,
+            Item: {
+              PK: recording.id,
+              SK: recording.id,
+              Type: "Recording",
+              DateCreated: date,
+              ObjectKey: recording.objectKey,
+              SamplingRate: recording.samplingRate,
+              "GSI1-PK": recording.segmentId,
+              "GSI1-SK": `Recording#${date}#${recording.id}`,
+              "GSI2-PK": recording.userId || undefined,
+            },
+          },
+        },
+      ],
     })
     .promise()
     .then(() => recording);

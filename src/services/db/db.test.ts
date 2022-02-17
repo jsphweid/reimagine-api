@@ -1,8 +1,8 @@
 import * as AWS from "aws-sdk";
+import { Midi } from "@tonejs/midi";
 
 import { DB } from ".";
 import { Utils } from "../../utils";
-import { Midi } from "@tonejs/midi";
 
 AWS.config.region = "us-west-2";
 
@@ -12,6 +12,46 @@ const documentClient = new AWS.DynamoDB.DocumentClient({
   region: "local-env",
 });
 const tableName = process.env.DYNAMODB_TABLE_NAME as string;
+
+const seg1 = {
+  id: "seg1",
+  arrangementId: "arrangement1",
+  lowestNote: 1,
+  highestNote: 2,
+  difficulty: 3,
+  midiJson: new Midi(),
+  offset: 1.111,
+  dateCreated: new Date(),
+};
+
+const seg2 = {
+  id: "seg2",
+  arrangementId: "arrangement2",
+  lowestNote: 2,
+  highestNote: 3,
+  difficulty: 4,
+  midiJson: new Midi(),
+  offset: 2.222,
+  dateCreated: new Date(),
+};
+
+const rec1 = {
+  id: "rec1",
+  segmentId: "seg1",
+  userId: "user1",
+  objectKey: "objectkey1",
+  samplingRate: 44100,
+  dateCreated: new Date(),
+};
+
+const rec2 = {
+  id: "rec2",
+  segmentId: "seg2",
+  userId: null,
+  objectKey: "objectkey2",
+  samplingRate: 44100,
+  dateCreated: new Date(),
+};
 
 const clearTable = async () => {
   let items: any[] = [];
@@ -70,66 +110,53 @@ describe("DB tests", () => {
   });
 
   test("recording", async () => {
-    const rec1 = {
-      id: "rec1",
-      segmentId: "seg1",
-      userId: "user1",
-      objectKey: "objectkey1",
-      samplingRate: 44100,
-      dateCreated: new Date(),
-    };
+    const segments = await DB.saveSegments([seg1, seg2]);
 
-    const rec2 = {
-      id: "rec2",
-      segmentId: "seg2",
-      userId: null,
-      objectKey: "objectkey2",
-      samplingRate: 44100,
-      dateCreated: new Date(),
-    };
+    // segments initally have 0 recordings
+    expect(segments.every((s) => s.numRecordings === 0)).toBe(true);
 
     await DB.saveRecording(rec1);
     await DB.saveRecording(rec2);
 
+    // recording info looks good
     expect(await DB.getRecordingById(rec1.id)).toEqual(rec1);
     expect(await DB.getRecordingById(rec2.id)).toEqual(rec2);
     expect(await DB.getRecordingsByUserId(rec1.userId)).toEqual([rec1]);
     expect(await DB.getRecordingsBySegmentId(rec1.segmentId)).toEqual([rec1]);
     expect(await DB.getRecordingsBySegmentId(rec2.segmentId)).toEqual([rec2]);
+
+    // segments have 1 recording each now...
+    expect((await DB.getSegmentById(seg1.id))?.numRecordings).toBe(1);
+    expect((await DB.getSegmentById(seg2.id))?.numRecordings).toBe(1);
   });
 
   test("segment", async () => {
-    const seg1 = {
-      id: "seg1",
-      arrangementId: "arrangement1",
-      lowestNote: 1,
-      highestNote: 2,
-      difficulty: 3,
-      midiJson: new Midi(),
-      offset: 1.111,
-      dateCreated: new Date(),
-    };
-    const seg2 = {
-      id: "seg2",
-      arrangementId: "arrangement2",
-      lowestNote: 2,
-      highestNote: 3,
-      difficulty: 4,
-      midiJson: new Midi(),
-      offset: 2.222,
-      dateCreated: new Date(),
-    };
-
     await DB.saveSegments([seg1, seg2]);
 
-    expect(await DB.getSegmentById(seg1.id)).toEqual(seg1);
-    expect(await DB.getSegmentById(seg2.id)).toEqual(seg2);
+    const res1 = await DB.getSegmentById(seg1.id);
+    const res2 = await DB.getSegmentById(seg2.id);
+    expect(res1).toEqual({ ...seg1, numRecordings: 0 });
+    expect(res2).toEqual({ ...seg2, numRecordings: 0 });
+
     expect(await DB.getSegmentsByArrangementId(seg1.arrangementId)).toEqual([
-      seg1,
+      { ...seg1, numRecordings: 0 },
     ]);
     expect(await DB.getSegmentsByArrangementId(seg2.arrangementId)).toEqual([
-      seg2,
+      { ...seg2, numRecordings: 0 },
     ]);
+  });
+
+  test("get next segment works", async () => {
+    await DB.saveSegments([seg1, seg2]);
+
+    // after saving 1 recording for seg1, next segment should get seg2
+    await DB.saveRecording(rec1);
+    expect((await DB.getNextSegment()).id).toBe(seg2.id);
+
+    // saving 2 recordings for seg2 will make seg1 then the next recording
+    await DB.saveRecording({ ...rec2, id: "11" });
+    await DB.saveRecording({ ...rec2, id: "22" });
+    expect((await DB.getNextSegment()).id).toBe(seg1.id);
   });
 
   test("mix", async () => {
