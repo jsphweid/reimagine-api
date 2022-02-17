@@ -9,3 +9,4 @@ destroy.sh
 run-locally.sh
 capture-locally.ts
 .DS_Store
+.env
