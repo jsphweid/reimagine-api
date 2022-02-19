@@ -32,12 +32,12 @@ export const resolvers: Resolvers = {
     },
     getRecordingsByIds: async (_, args) => {
       const res = await Promise.all(args.recordingIds.map(DB.getRecordingById));
-      return res.map(Utils.serialize);
+      return res.map(Utils.attachedPresigned).map(Utils.serialize);
     },
     getRecordingsByUserId: async (_, args, context) => {
       Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
       const res = await DB.getRecordingsByUserId(args.userId);
-      return res.map(Utils.serialize);
+      return res.map(Utils.attachedPresigned).map(Utils.serialize);
     },
     getSegmentById: async (_, args) => {
       const res = await DB.getSegmentById(args.segmentId);
@@ -89,9 +89,13 @@ export const resolvers: Resolvers = {
     createRecording: async (_, args, context) => {
       // TODO: should rate limit somehow
       const { base64Blob, sampleRate, segmentId } = args;
+
+      if (!base64Blob.startsWith("data:audio/wav;base64")) {
+        throw new Error("For now only .wav recordings can be uploaded.");
+      }
+
       const id = Utils.generateGUID();
-      const isoDate = context.now.toISOString();
-      const objectKey = `recording-${isoDate}-${Utils.generateGUID()}.wav`;
+      const objectKey = `recording-${Utils.generateGUID()}.wav`;
       const recording = {
         id: id,
         segmentId: segmentId,
@@ -101,11 +105,11 @@ export const resolvers: Resolvers = {
         dateCreated: context.now,
       };
       await ObjectStorage.uploadBuffer(
-        Buffer.from(base64Blob, "base64"),
+        Buffer.from(base64Blob.replace("data:audio/wav;base64,", ""), "base64"),
         objectKey
       );
       await DB.saveRecording(recording);
-      return Utils.serialize(recording);
+      return Utils.serialize(Utils.attachedPresigned(recording));
     },
     deleteArrangement: async (_, args, context) => {
       Executor.run(context.executor, (e) => e.assertIsAdmin());

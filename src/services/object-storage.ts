@@ -40,9 +40,4 @@ export namespace ObjectStorage {
       })
       .promise()
       .then((response) => response.Body || null);
-
-  export const urlFromKey = (objectKey: string): string =>
-    // TODO: eventually this should not exist as it
-    // relies on the item being public which is bad
-    `https://${bucketName}.s3-${region}.amazonaws.com/${objectKey}`;
 }

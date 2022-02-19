@@ -15,8 +15,9 @@ export const typeDefs = gql`
   type Recording {
     id: String!
     segmentId: String!
-    objectKey: String
+    objectKey: String!
     dateCreated: String!
+    url: String!
   }
 
   type Mix {
@@ -73,7 +74,7 @@ export const typeDefs = gql`
   type Query {
     getUserSettingsByUserId(userId: String!): UserSettings
     getRecordingsByIds(recordingIds: [String!]!): [Recording]
-    getRecordingsByUserId(userId: String!): [Recording]
+    getRecordingsByUserId(userId: String!): [Recording!]
     getMixesByArrangementId(arrangementId: String!): [Mix]
     getMixesByRecordingId(recordingId: String!): [Mix]
     getArrangementByIds(arrangementIds: [String!]!): [Arrangement]

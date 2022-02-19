@@ -1,5 +1,6 @@
 import { Midi } from "@tonejs/midi";
 import { documentClient } from "./services/db/db-utils";
+import { ObjectStorage } from "./services/object-storage";
 
 export namespace Utils {
   export const chunkArray = <T>(arr: T[], size: number): T[][] => {
@@ -75,6 +76,16 @@ export namespace Utils {
         }
       : null;
   }
+
+  export const attachedPresigned = <T extends { objectKey: string }>(
+    obj: T | null
+  ) =>
+    obj
+      ? {
+          ...obj,
+          url: ObjectStorage.getPresignedUrl(obj.objectKey),
+        }
+      : null;
 
   export function dynamoDbBatchWrite(table: string, items: any[]) {
     return Promise.all(
