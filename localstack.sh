@@ -1,1 +1,1 @@
-SERVICES="dynamodb" localstack start
+AWS_REGION=local-env SERVICES="dynamodb" localstack start
