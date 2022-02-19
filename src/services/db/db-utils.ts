@@ -3,7 +3,7 @@ import * as AWS from "aws-sdk";
 export const documentClient = new AWS.DynamoDB.DocumentClient({
   convertEmptyValues: true,
   ...((process.env.JEST_WORKER_ID || process.env.NODE_ENV === "dev") && {
-    endpoint: "localhost:8000",
+    endpoint: "localhost:4566",
     sslEnabled: false,
     region: "local-env",
   }),

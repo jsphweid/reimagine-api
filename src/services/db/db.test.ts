@@ -4,10 +4,10 @@ import { Midi } from "@tonejs/midi";
 import { DB } from ".";
 import { Utils } from "../../utils";
 
-AWS.config.region = "us-west-2";
+AWS.config.region = "local-env";
 
 const documentClient = new AWS.DynamoDB.DocumentClient({
-  endpoint: "localhost:8000",
+  endpoint: "localhost:4566",
   sslEnabled: false,
   region: "local-env",
 });
