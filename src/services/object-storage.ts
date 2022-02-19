@@ -1,10 +1,17 @@
 import * as AWS from "aws-sdk";
 
-const s3 = new AWS.S3();
+const s3 = new AWS.S3({
+  ...(process.env.NODE_ENV === "dev" && {
+    s3ForcePathStyle: true,
+    endpoint: "http://localhost:4566",
+    sslEnabled: false,
+    region: "local-env",
+  }),
+});
 
 export namespace ObjectStorage {
-  const bucketName = process.env.FILES_BUCKET as string;
-  const region = process.env.AWS_REGION as string;
+  const bucketName = process.env.S3_BUCKET_NAME || "reimagine-test-bucket";
+  const region = process.env.AWS_REGION || "local-env";
 
   export const uploadBuffer = (body: AWS.S3.Body, key: string): Promise<any> =>
     s3
@@ -35,7 +42,7 @@ export namespace ObjectStorage {
       .then((response) => response.Body || null);
 
   export const urlFromKey = (objectKey: string): string =>
-    // TODO: eventually this should not exist as it relies on the item
-    // being public which is bad
+    // TODO: eventually this should not exist as it
+    // relies on the item being public which is bad
     `https://${bucketName}.s3-${region}.amazonaws.com/${objectKey}`;
 }

@@ -11,7 +11,7 @@ const documentClient = new AWS.DynamoDB.DocumentClient({
   sslEnabled: false,
   region: "local-env",
 });
-const tableName = process.env.DYNAMODB_TABLE_NAME as string;
+const tableName = process.env.DYNAMODB_TABLE_NAME || "ReimagineTestTable";
 
 const seg1 = {
   id: "seg1",

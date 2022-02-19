@@ -58,7 +58,7 @@ export class ReimagineStack extends cdk.Stack {
       timeout: Duration.seconds(20),
       environment: {
         DYNAMODB_TABLE_NAME: table.tableName,
-        FILES_BUCKET: bucket.bucketName,
+        S3_BUCKET_NAME: bucket.bucketName,
       },
     });
 
