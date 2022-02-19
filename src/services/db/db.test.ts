@@ -40,7 +40,7 @@ const rec1 = {
   segmentId: "seg1",
   userId: "user1",
   objectKey: "objectkey1",
-  samplingRate: 44100,
+  sampleRate: 44100,
   dateCreated: new Date(),
 };
 
@@ -49,7 +49,7 @@ const rec2 = {
   segmentId: "seg2",
   userId: null,
   objectKey: "objectkey2",
-  samplingRate: 44100,
+  sampleRate: 44100,
   dateCreated: new Date(),
 };
 

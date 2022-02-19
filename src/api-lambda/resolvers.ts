@@ -88,7 +88,7 @@ export const resolvers: Resolvers = {
     },
     createRecording: async (_, args, context) => {
       // TODO: should rate limit somehow
-      const { base64Blob, samplingRate, segmentId } = args;
+      const { base64Blob, sampleRate, segmentId } = args;
       const id = Utils.generateGUID();
       const isoDate = context.now.toISOString();
       const objectKey = `recording-${isoDate}-${Utils.generateGUID()}.wav`;
@@ -96,7 +96,7 @@ export const resolvers: Resolvers = {
         id: id,
         segmentId: segmentId,
         objectKey,
-        samplingRate,
+        sampleRate,
         userId: context.executor?.userId || null,
         dateCreated: context.now,
       };

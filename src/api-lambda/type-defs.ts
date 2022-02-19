@@ -62,15 +62,12 @@ export const typeDefs = gql`
     createRecording(
       base64Blob: String!
       segmentId: String!
-      samplingRate: Int!
+      sampleRate: Int!
     ): Recording
 
     createPiece(name: String!): Piece
     createSimpleArrangement(pieceId: String!, base64Blob: String!): Arrangement
     deleteArrangement(arrangementId: String!): String
-    # createMixFromRecordingFragments(
-    #   recordings: [RecordingFragmentSpec]!
-    # ): String
   }
 
   type Query {
