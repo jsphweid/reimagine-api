@@ -66,6 +66,7 @@ export const typeDefs = gql`
       sampleRate: Int!
     ): Recording
 
+    createRandomMix: Mix
     createPiece(name: String!): Piece
     createSimpleArrangement(pieceId: String!, base64Blob: String!): Arrangement
     deleteArrangement(arrangementId: String!): String

@@ -1,10 +1,11 @@
 import { segmentizeMidi } from "midi-segmentizer";
 
-import { Resolvers } from "../generated";
-import Executor from "../executor";
-import { DB } from "../services/db";
-import { Utils } from "../utils";
-import { ObjectStorage } from "../services/object-storage";
+import { Resolvers } from "./generated";
+import Executor from "./executor";
+import { DB } from "./services/db";
+import { Utils } from "./utils";
+import { ObjectStorage } from "./services/object-storage";
+import { Recording } from "./services/db/recording";
 
 export const resolvers: Resolvers = {
   Query: {
@@ -37,7 +38,10 @@ export const resolvers: Resolvers = {
     getRecordingsByUserId: async (_, args, context) => {
       Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
       const res = await DB.getRecordingsByUserId(args.userId);
-      return res.map(Utils.attachedPresigned).map(Utils.serialize);
+      return res
+        .map(Utils.attachedPresigned)
+        .map(Utils.serialize)
+        .map((v) => v!); // NOTE: makes types happy for now
     },
     getSegmentById: async (_, args) => {
       const res = await DB.getSegmentById(args.segmentId);
@@ -57,6 +61,29 @@ export const resolvers: Resolvers = {
     updateUserSettings: (_, args, context) => {
       Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
       return DB.upsertUserSettings(args.userId, args.input);
+    },
+    createRandomMix: async (_, __, context) => {
+      // NOTE: very heavy handed way of doing this but should be fine while low load
+      Executor.run(context.executor, (e) => e.assertIsAdmin());
+      const pieces = await DB.getAllPieces();
+      const groups = await Promise.all(
+        pieces.map((p) => p.id).map(DB.getArrangementsByPieceId)
+      );
+      const arrangements = Utils.flatten(groups);
+      for (const arrangement of arrangements) {
+        const segments = await DB.getSegmentsByArrangementId(arrangement.id);
+        const choices: Recording[] = [];
+        for (const segment of segments) {
+          const recordings = await DB.getRecordingsBySegmentId(segment.id);
+          choices.push(Utils.pickRandom(recordings));
+        }
+
+        if (segments.length === choices.length) {
+          // We have at least one of each!
+        }
+      }
+
+      return null;
     },
     createSimpleArrangement: async (_, args, context) => {
       Executor.run(context.executor, (e) => e.assertIsAdmin());

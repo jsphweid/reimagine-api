@@ -1,4 +1,4 @@
-schema: "./src/api-lambda/type-defs.ts"
+schema: "./src/type-defs.ts"
 generates:
   ./src/generated.ts:
     plugins:

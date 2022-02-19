@@ -53,7 +53,7 @@ export class ReimagineStack extends cdk.Stack {
     const apiLambda = new lambda.Function(this, "ApiLambda", {
       runtime: lambda.Runtime.NODEJS_14_X,
       code: lambda.Code.fromAsset("../build"),
-      handler: "api-lambda/index.handler",
+      handler: "index.handler",
       memorySize: 512,
       timeout: Duration.seconds(20),
       environment: {

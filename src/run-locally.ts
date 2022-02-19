@@ -1,7 +1,7 @@
 import { ApolloServer } from "apollo-server";
 import * as dotenv from "dotenv";
 
-import { genContext } from "../context";
+import { genContext } from "./context";
 import { resolvers } from "./resolvers";
 import { typeDefs } from "./type-defs";
 

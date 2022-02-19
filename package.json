@@ -8,7 +8,7 @@
     "build": "rm -rf build && tsc && cp package.json ./build && cp package-lock.json ./build && cd build && npm i --production",
     "test": "./localstack_configure.sh && jest",
     "codegen": "graphql-codegen --config ./codegen.yml",
-    "start": "NODE_ENV=dev AWS_REGION=local-dev ts-node src/api-lambda/run-locally.ts"
+    "start": "NODE_ENV=dev AWS_REGION=local-dev ts-node src/run-locally.ts"
   },
   "dependencies": {
     "@apollo/link-context": "^2.0.0-beta.3",

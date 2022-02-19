@@ -77,6 +77,16 @@ export namespace Utils {
       : null;
   }
 
+  export function flatten<T>(arrs: T[][]): T[] {
+    const res: T[] = [];
+    for (const arr of arrs) {
+      for (const item of arr) {
+        res.push(item);
+      }
+    }
+    return res;
+  }
+
   export const attachedPresigned = <T extends { objectKey: string }>(
     obj: T | null
   ) =>
