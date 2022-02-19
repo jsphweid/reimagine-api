@@ -6,6 +6,7 @@ import { DB } from "./services/db";
 import { Utils } from "./utils";
 import { ObjectStorage } from "./services/object-storage";
 import { Recording } from "./services/db/recording";
+import { makeMix } from "./wav";
 
 export const resolvers: Resolvers = {
   Query: {
@@ -72,14 +73,36 @@ export const resolvers: Resolvers = {
       const arrangements = Utils.flatten(groups);
       for (const arrangement of arrangements) {
         const segments = await DB.getSegmentsByArrangementId(arrangement.id);
-        const choices: Recording[] = [];
+        const choices = [];
         for (const segment of segments) {
           const recordings = await DB.getRecordingsBySegmentId(segment.id);
-          choices.push(Utils.pickRandom(recordings));
+          const choice = Utils.pickRandom(recordings);
+          choices.push({
+            ...choice,
+            offset: segment.offset,
+            recordingId: choice.id,
+          });
         }
 
         if (segments.length === choices.length) {
           // We have at least one of each!
+          const buffer = await makeMix(choices);
+          const objectKey = `mix-${Utils.generateGUID()}.wav`;
+          await ObjectStorage.uploadBuffer(buffer, objectKey);
+          const id = Utils.generateGUID();
+          const dateCreated = new Date();
+          await DB.saveMix({
+            id,
+            arrangementId: arrangement.id,
+            objectKey,
+            dateCreated,
+            recordingIds: choices.map((c) => c.recordingId),
+          });
+          return Utils.serialize({
+            id,
+            dateCreated,
+            url: ObjectStorage.getPresignedUrl(objectKey),
+          });
         }
       }
 

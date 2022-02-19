@@ -32,12 +32,14 @@ export namespace ObjectStorage {
     });
   };
 
-  export const getItem = (objectKey: string): Promise<AWS.S3.Body | null> =>
+  export const getItem = (objectKey: string): Promise<Buffer | null> =>
     s3
       .getObject({
         Bucket: bucketName,
         Key: objectKey,
       })
       .promise()
-      .then((response) => response.Body || null);
+      .then((response) =>
+        response.Body ? Buffer.from(response.Body as any) : null
+      );
 }

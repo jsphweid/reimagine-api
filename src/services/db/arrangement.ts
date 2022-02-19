@@ -3,7 +3,7 @@ import { Utils } from "../../utils";
 import { documentClient, tableName } from "./db-utils";
 import { Segment } from "./segment";
 
-interface Arrangement {
+export interface Arrangement {
   id: string;
   pieceId: string;
   dateCreated: Date;

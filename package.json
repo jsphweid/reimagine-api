@@ -19,7 +19,8 @@
     "jwks-rsa": "^2.0.5",
     "md5": "^2.2.1",
     "midi-segmentizer": "^1.0.0",
-    "node-wav": "0.0.2"
+    "node-wav": "^0.0.2",
+    "wave-resampler": "^1.0.0"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^2.5.0",
@@ -28,6 +29,7 @@
     "@types/jest": "^23.1.0",
     "@types/md5": "^2.1.32",
     "@types/node": "^8.0.57",
+    "@types/node-wav": "^0.0.0",
     "apollo-server": "^3.6.2",
     "jest": "^27.5.0",
     "ts-jest": "^27.1.3",
