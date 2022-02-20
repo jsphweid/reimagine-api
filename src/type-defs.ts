@@ -22,7 +22,7 @@ export const typeDefs = gql`
 
   type Mix {
     id: String!
-    url: String
+    url: String!
     dateCreated: String!
   }
 
@@ -76,10 +76,11 @@ export const typeDefs = gql`
     getUserSettingsByUserId(userId: String!): UserSettings
     getRecordingsByIds(recordingIds: [String!]!): [Recording]
     getRecordingsByUserId(userId: String!): [Recording!]
-    getMixesByArrangementId(arrangementId: String!): [Mix]
-    getMixesByRecordingId(recordingId: String!): [Mix]
+    getMixesByArrangementId(arrangementId: String!): [Mix!]
+    getMixesByRecordingId(recordingId: String!): [Mix!]
+    getMixesByUserId(userId: String!): [Mix!]
     getArrangementByIds(arrangementIds: [String!]!): [Arrangement]
-    getArrangementsByPieceId(pieceId: String!): [Arrangement]
+    getArrangementsByPieceId(pieceId: String!): [Arrangement!]
     getAllPieces: [Piece]
 
     # not passing a segmentId returns a random segment...

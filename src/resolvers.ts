@@ -16,11 +16,11 @@ export const resolvers: Resolvers = {
     },
     getMixesByArrangementId: async (_, args) => {
       const mixes = await DB.getMixesByArrangementId(args.arrangementId);
-      return mixes.map(Utils.serialize);
+      return mixes.map(Utils.serialize).map(Utils.attachPresigned);
     },
     getMixesByRecordingId: async (_, args) => {
       const res = await DB.getMixesByRecordingId(args.recordingId);
-      return res.map(Utils.serialize);
+      return res.map(Utils.serialize).map(Utils.attachPresigned);
     },
     getArrangementsByPieceId: async (_, args) => {
       const res = await DB.getArrangementsByPieceId(args.pieceId);
@@ -30,19 +30,16 @@ export const resolvers: Resolvers = {
       const res = await Promise.all(
         args.arrangementIds.map(DB.getArrangementById)
       );
-      return res.map(Utils.serialize);
+      return res.map(Utils.maybeSerialize);
     },
     getRecordingsByIds: async (_, args) => {
       const res = await Promise.all(args.recordingIds.map(DB.getRecordingById));
-      return res.map(Utils.attachedPresigned).map(Utils.serialize);
+      return res.map(Utils.maybeAttachedPresigned).map(Utils.maybeSerialize);
     },
     getRecordingsByUserId: async (_, args, context) => {
       Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
       const res = await DB.getRecordingsByUserId(args.userId);
-      return res
-        .map(Utils.attachedPresigned)
-        .map(Utils.serialize)
-        .map((v) => v!); // NOTE: makes types happy for now
+      return res.map(Utils.attachPresigned).map(Utils.serialize);
     },
     getSegmentById: async (_, args) => {
       const res = await DB.getSegmentById(args.segmentId);
@@ -56,6 +53,17 @@ export const resolvers: Resolvers = {
       // TODO: rate limit somehow
       const res = await DB.getNextSegment();
       return Utils.serialize(res);
+    },
+    getMixesByUserId: async (_, args, context) => {
+      Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
+      const recordings = await DB.getRecordingsByUserId(args.userId);
+      const recordingIds = Utils.removeDuplicates(recordings).map((r) => r.id);
+      const res = Utils.flatten(
+        await Promise.all(recordingIds.map(DB.getMixesByRecordingId))
+      );
+      return Utils.removeDuplicates(res)
+        .map(Utils.serialize)
+        .map(Utils.attachPresigned);
     },
   },
   Mutation: {
@@ -159,7 +167,7 @@ export const resolvers: Resolvers = {
         objectKey
       );
       await DB.saveRecording(recording);
-      return Utils.serialize(Utils.attachedPresigned(recording));
+      return Utils.serialize(Utils.attachPresigned(recording));
     },
     deleteArrangement: async (_, args, context) => {
       Executor.run(context.executor, (e) => e.assertIsAdmin());

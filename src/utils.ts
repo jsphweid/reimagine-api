@@ -64,17 +64,19 @@ export namespace Utils {
   }
 
   export function serialize<T extends { dateCreated?: Date; midiJson?: Midi }>(
-    obj: T | null
+    obj: T
   ) {
-    return obj
-      ? {
-          ...obj,
-          dateCreated: obj.dateCreated
-            ? obj.dateCreated.toISOString()
-            : undefined,
-          midiJson: obj.midiJson ? midiToJsonString(obj.midiJson) : undefined,
-        }
-      : null;
+    return {
+      ...obj,
+      dateCreated: obj.dateCreated ? obj.dateCreated.toISOString() : undefined,
+      midiJson: obj.midiJson ? midiToJsonString(obj.midiJson) : undefined,
+    };
+  }
+
+  export function maybeSerialize<
+    T extends { dateCreated?: Date; midiJson?: Midi }
+  >(obj: T | null) {
+    return obj ? serialize(obj) : null;
   }
 
   export function flatten<T>(arrs: T[][]): T[] {
@@ -87,15 +89,26 @@ export namespace Utils {
     return res;
   }
 
-  export const attachedPresigned = <T extends { objectKey: string }>(
+  export function removeDuplicates<T extends { id: string }>(arr: T[]): T[] {
+    const seen = new Set();
+    const res: T[] = [];
+    for (const item of arr) {
+      if (!seen.has(item.id)) {
+        seen.add(item.id);
+        res.push(item);
+      }
+    }
+    return res;
+  }
+
+  export const attachPresigned = <T extends { objectKey: string }>(obj: T) => ({
+    ...obj,
+    url: ObjectStorage.getPresignedUrl(obj.objectKey),
+  });
+
+  export const maybeAttachedPresigned = <T extends { objectKey: string }>(
     obj: T | null
-  ) =>
-    obj
-      ? {
-          ...obj,
-          url: ObjectStorage.getPresignedUrl(obj.objectKey),
-        }
-      : null;
+  ) => (obj ? attachPresigned(obj) : null);
 
   export function dynamoDbBatchWrite(table: string, items: any[]) {
     return Promise.all(
