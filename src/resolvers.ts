@@ -1,12 +1,24 @@
 import { segmentizeMidi } from "midi-segmentizer";
+import { getGraphQLRateLimiter } from "graphql-rate-limit";
 
 import { Resolvers } from "./generated";
 import Executor from "./executor";
 import { DB } from "./services/db";
 import { Utils } from "./utils";
 import { ObjectStorage } from "./services/object-storage";
-import { Recording } from "./services/db/recording";
 import { makeMix } from "./wav";
+
+const _rateLimiter = getGraphQLRateLimiter({
+  identifyContext: (ctx) => ctx.id,
+});
+
+const limit: ReturnType<typeof getGraphQLRateLimiter> = async (obj1, obj2) => {
+  const errorMessage = await _rateLimiter(obj1, obj2);
+  if (errorMessage) {
+    throw new Error(errorMessage);
+  }
+  return undefined;
+};
 
 export const resolvers: Resolvers = {
   Query: {
@@ -49,12 +61,13 @@ export const resolvers: Resolvers = {
       const res = await DB.getAllPieces();
       return res ? res.map(Utils.serialize) : [];
     },
-    getNextSegment: async () => {
-      // TODO: rate limit somehow
+    getNextSegment: async (parent, args, context, info) => {
+      await limit({ parent, args, context, info }, { max: 5, window: "10s" });
       const res = await DB.getNextSegment();
       return Utils.serialize(res);
     },
-    getMixesByUserId: async (_, args, context) => {
+    getMixesByUserId: async (parent, args, context, info) => {
+      await limit({ parent, args, context, info }, { max: 5, window: "10s" });
       Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
       const recordings = await DB.getRecordingsByUserId(args.userId);
       const recordingIds = Utils.removeDuplicates(recordings).map((r) => r.id);
@@ -144,8 +157,8 @@ export const resolvers: Resolvers = {
       await DB.savePiece(piece);
       return Utils.serialize(piece);
     },
-    createRecording: async (_, args, context) => {
-      // TODO: should rate limit somehow
+    createRecording: async (parent, args, context, info) => {
+      await limit({ parent, args, context, info }, { max: 3, window: "10s" });
       const { base64Blob, sampleRate, segmentId } = args;
 
       if (!base64Blob.startsWith("data:audio/wav;base64")) {
