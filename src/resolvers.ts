@@ -71,12 +71,14 @@ export const resolvers: Resolvers = {
       Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
       const recordings = await DB.getRecordingsByUserId(args.userId);
       const recordingIds = Utils.removeDuplicates(recordings).map((r) => r.id);
-      const res = Utils.flatten(
+      const mixes = Utils.flatten(
         await Promise.all(recordingIds.map(DB.getMixesByRecordingId))
       );
-      return Utils.removeDuplicates(res)
+      const res = Utils.removeDuplicates(mixes)
         .map(Utils.serialize)
         .map(Utils.attachPresigned);
+
+      return res.sort((a, b) => (b.dateCreated < a.dateCreated ? -1 : 1));
     },
   },
   Mutation: {
