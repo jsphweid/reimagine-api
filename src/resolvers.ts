@@ -14,7 +14,8 @@ const _rateLimiter = getGraphQLRateLimiter({
 
 const limit: ReturnType<typeof getGraphQLRateLimiter> = async (obj1, obj2) => {
   const errorMessage = await _rateLimiter(obj1, obj2);
-  if (errorMessage) {
+  const isAdmin = obj1.context.executor?.isAdmin();
+  if (errorMessage && !isAdmin) {
     throw new Error(errorMessage);
   }
   return undefined;
