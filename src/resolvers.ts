@@ -98,6 +98,11 @@ export const resolvers: Resolvers = {
         for (const segment of segments) {
           const recordings = await DB.getRecordingsBySegmentId(segment.id);
           const choice = Utils.pickRandom(recordings);
+
+          if (!choice) {
+            break;
+          }
+
           choices.push({
             ...choice,
             offset: segment.offset,

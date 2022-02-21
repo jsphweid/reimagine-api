@@ -23,6 +23,7 @@ function mapMixToDbItem(mix: Mix, recordingId: string, date: string) {
     SK: `Mix#${date}#${mix.id}`,
     "GSI1-PK": mix.id,
     "GSI1-SK": recordingId,
+    Type: "MixRecording",
     // manually project these below for easy retrieval later
     ArrangementId: mix.arrangementId,
     ObjectKey: mix.objectKey,
