@@ -6,3 +6,4 @@ generates:
       - typescript-resolvers
     config:
       contextType: ./context#Context
+      maybeValue: "T extends PromiseLike<infer U> ? Promise<U | null> : T | null"

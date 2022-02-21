@@ -22,6 +22,14 @@ const limit: ReturnType<typeof getGraphQLRateLimiter> = async (obj1, obj2) => {
 };
 
 export const resolvers: Resolvers = {
+  Mix: {
+    arrangement: async (source) => {
+      // TODO: use mapper
+      console.log("source!", source);
+      const arrId: string = (source as any).arrangementId;
+      return DB.getArrangementById(arrId).then(Utils.maybeSerialize);
+    },
+  },
   Query: {
     getUserSettingsByUserId: (_, args, context) => {
       Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
@@ -145,7 +153,12 @@ export const resolvers: Resolvers = {
       }
       const id = Utils.generateGUID();
       const arrangement = await DB.saveArrangement(
-        { id, pieceId: args.pieceId, dateCreated: context.now },
+        {
+          id,
+          name: args.name,
+          pieceId: args.pieceId,
+          dateCreated: context.now,
+        },
         segments.map((s) => ({
           ...s,
           arrangementId: id,

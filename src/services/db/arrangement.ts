@@ -5,6 +5,7 @@ import { Segment } from "./segment";
 
 export interface Arrangement {
   id: string;
+  name: string;
   pieceId: string;
   dateCreated: Date;
 }
@@ -12,6 +13,7 @@ export interface Arrangement {
 function mapArrangement(item: any): Arrangement {
   return {
     id: item["PK"],
+    name: item["ArrangementName"],
     pieceId: item["GSI1-PK"],
     dateCreated: new Date(item["DateCreated"]),
   };
@@ -29,6 +31,7 @@ export async function _saveArrangement(
         PK: arrangement.id,
         SK: arrangement.id,
         Type: "Arrangement",
+        ArrangementName: arrangement.name,
         DateCreated: date,
         "GSI1-PK": arrangement.pieceId,
         "GSI1-SK": `Arrangement#${date}#${arrangement.id}`,

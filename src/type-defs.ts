@@ -24,11 +24,12 @@ export const typeDefs = gql`
     id: String!
     url: String!
     dateCreated: String!
+    arrangement: Arrangement
   }
 
   type Arrangement {
     id: String!
-    name: String
+    name: String!
     pieceId: String!
     dateCreated: String!
   }
@@ -68,7 +69,11 @@ export const typeDefs = gql`
 
     createRandomMix: Mix
     createPiece(name: String!): Piece
-    createSimpleArrangement(pieceId: String!, base64Blob: String!): Arrangement
+    createSimpleArrangement(
+      pieceId: String!
+      name: String!
+      base64Blob: String!
+    ): Arrangement
     deleteArrangement(arrangementId: String!): String
   }
 
