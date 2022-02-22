@@ -25,9 +25,15 @@ export const resolvers: Resolvers = {
   Mix: {
     arrangement: async (source) => {
       // TODO: use mapper
-      console.log("source!", source);
       const arrId: string = (source as any).arrangementId;
       return DB.getArrangementById(arrId).then(Utils.maybeSerialize);
+    },
+  },
+  Arrangement: {
+    piece: async (source) => {
+      // TODO: use mapper
+      const pieceId: string = (source as any).pieceId;
+      return DB.getPieceById(pieceId).then(Utils.maybeSerialize);
     },
   },
   Query: {

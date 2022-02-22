@@ -30,7 +30,7 @@ export const typeDefs = gql`
   type Arrangement {
     id: String!
     name: String!
-    pieceId: String!
+    piece: Piece
     dateCreated: String!
   }
 

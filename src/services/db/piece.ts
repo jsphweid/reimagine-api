@@ -6,6 +6,14 @@ interface Piece {
   dateCreated: Date;
 }
 
+export function map(item: any): Piece {
+  return {
+    id: item.PK,
+    name: item.PieceName,
+    dateCreated: new Date(item.DateCreated),
+  };
+}
+
 export async function _savePiece(piece: Piece): Promise<Piece> {
   const date = piece.dateCreated.toISOString();
   return documentClient
@@ -21,6 +29,17 @@ export async function _savePiece(piece: Piece): Promise<Piece> {
     })
     .promise()
     .then(() => piece);
+}
+
+// TODO: write test
+export async function _getPieceById(pieceId: string): Promise<Piece | null> {
+  return documentClient
+    .get({
+      TableName: tableName,
+      Key: { PK: pieceId, SK: pieceId },
+    })
+    .promise()
+    .then((res) => (res.Item ? map(res.Item) : null));
 }
 
 export async function _getAllPieces(): Promise<Piece[]> {

@@ -9,7 +9,7 @@ import {
   _getMixesByRecordingId,
   _saveMix,
 } from "./mix";
-import { _getAllPieces, _savePiece } from "./piece";
+import { _getAllPieces, _getPieceById, _savePiece } from "./piece";
 import {
   _getRecordingById,
   _getRecordingsBySegmentId,
@@ -24,6 +24,7 @@ import {
   _saveSegments,
 } from "./segment";
 import { _getUserSettings, _upsertUserSettings } from "./user-settings";
+// TODO: cleanup this BS
 
 export namespace DB {
   export const saveMix = _saveMix;
@@ -50,5 +51,6 @@ export namespace DB {
   export const deleteArrangementById = _deleteArrangementById;
 
   export const getAllPieces = _getAllPieces;
+  export const getPieceById = _getPieceById;
   export const savePiece = _savePiece;
 }
