@@ -14,6 +14,7 @@ export const typeDefs = gql`
 
   type Recording {
     id: String!
+    duration: Float!
     segmentId: String!
     objectKey: String!
     dateCreated: String!
@@ -23,6 +24,7 @@ export const typeDefs = gql`
   type Mix {
     id: String!
     url: String!
+    duration: Float!
     dateCreated: String!
     arrangement: Arrangement
   }

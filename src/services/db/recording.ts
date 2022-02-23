@@ -7,6 +7,7 @@ export interface Recording {
   objectKey: string;
   sampleRate: number;
   dateCreated: Date;
+  duration: number;
 }
 
 function mapRecording(item: any): Recording {
@@ -14,6 +15,7 @@ function mapRecording(item: any): Recording {
     id: item["PK"],
     userId: item["GSI2-PK"] || null,
     segmentId: item["GSI1-PK"],
+    duration: item["Duration"],
     sampleRate: item["SampleRate"],
     objectKey: item["ObjectKey"],
     dateCreated: new Date(item["DateCreated"]),
@@ -55,6 +57,7 @@ export async function _saveRecording(recording: Recording): Promise<Recording> {
               SK: recording.id,
               Type: "Recording",
               DateCreated: date,
+              Duration: recording.duration,
               ObjectKey: recording.objectKey,
               SampleRate: recording.sampleRate,
               "GSI1-PK": recording.segmentId,

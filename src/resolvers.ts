@@ -6,7 +6,7 @@ import Executor from "./executor";
 import { DB } from "./services/db";
 import { Utils } from "./utils";
 import { ObjectStorage } from "./services/object-storage";
-import { makeMix } from "./wav";
+import { getDuration, makeMix } from "./wav";
 
 const _rateLimiter = getGraphQLRateLimiter({
   identifyContext: (ctx) => ctx.id,
@@ -92,7 +92,6 @@ export const resolvers: Resolvers = {
       const res = Utils.removeDuplicates(mixes)
         .map(Utils.serialize)
         .map(Utils.attachPresigned);
-
       return res.sort((a, b) => (b.dateCreated < a.dateCreated ? -1 : 1));
     },
   },
@@ -129,7 +128,7 @@ export const resolvers: Resolvers = {
 
         if (segments.length === choices.length) {
           // We have at least one of each!
-          const buffer = await makeMix(choices);
+          const { buffer, duration } = await makeMix(choices);
           const objectKey = `mix-${Utils.generateGUID()}.wav`;
           await ObjectStorage.uploadBuffer(buffer, objectKey);
           const id = Utils.generateGUID();
@@ -137,12 +136,14 @@ export const resolvers: Resolvers = {
           await DB.saveMix({
             id,
             arrangementId: arrangement.id,
+            duration,
             objectKey,
             dateCreated,
             recordingIds: choices.map((c) => c.recordingId),
           });
           return Utils.serialize({
             id,
+            duration,
             dateCreated,
             url: ObjectStorage.getPresignedUrl(objectKey),
           });
@@ -194,18 +195,21 @@ export const resolvers: Resolvers = {
 
       const id = Utils.generateGUID();
       const objectKey = `recording-${Utils.generateGUID()}.wav`;
+      const buffer = Buffer.from(
+        base64Blob.replace("data:audio/wav;base64,", ""),
+        "base64"
+      );
+      const duration = getDuration(buffer);
       const recording = {
-        id: id,
-        segmentId: segmentId,
+        id,
+        segmentId,
         objectKey,
         sampleRate,
+        duration,
         userId: context.executor?.userId || null,
         dateCreated: context.now,
       };
-      await ObjectStorage.uploadBuffer(
-        Buffer.from(base64Blob.replace("data:audio/wav;base64,", ""), "base64"),
-        objectKey
-      );
+      await ObjectStorage.uploadBuffer(buffer, objectKey);
       await DB.saveRecording(recording);
       return Utils.serialize(Utils.attachPresigned(recording));
     },

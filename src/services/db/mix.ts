@@ -5,12 +5,14 @@ interface Mix {
   id: string;
   arrangementId: string;
   objectKey: string;
+  duration: number;
   dateCreated: Date;
 }
 
 function mapMix(item: any): Mix {
   return {
     id: item["PK"],
+    duration: item["Duration"],
     arrangementId: item["GSI1-PK"],
     objectKey: item["ObjectKey"],
     dateCreated: new Date(item["DateCreated"]),
@@ -23,6 +25,7 @@ function mapMixToDbItem(mix: Mix, recordingId: string, date: string) {
     SK: `Mix#${date}#${mix.id}`,
     "GSI1-PK": mix.id,
     "GSI1-SK": recordingId,
+    Duration: mix.duration,
     Type: "MixRecording",
     // manually project these below for easy retrieval later
     ArrangementId: mix.arrangementId,
@@ -45,6 +48,7 @@ export async function _saveMix(
         SK: mix.id,
         Type: "Mix",
         DateCreated: date,
+        Duration: mix.duration,
         ObjectKey: mix.objectKey,
         "GSI1-PK": mix.arrangementId,
         "GSI1-SK": `Mix#${date}#${mix.id}`,
@@ -103,6 +107,7 @@ export async function _getMixesByRecordingId(
         ? res.Items.map((item) => ({
             id: item["GSI1-PK"],
             arrangementId: item["ArrangementId"],
+            duration: item["Duration"],
             objectKey: item["ObjectKey"],
             dateCreated: new Date(item["SK"].split("#")[1]),
           }))

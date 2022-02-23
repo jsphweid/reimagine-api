@@ -9,7 +9,17 @@ interface Recording {
   offset: number;
 }
 
-export async function makeMix(recordings: Recording[]): Promise<Buffer> {
+interface Wav {
+  buffer: Buffer;
+  duration: number;
+}
+
+export function getDuration(buffer: Buffer): number {
+  const { sampleRate, channelData } = decode(buffer);
+  return channelData[0].length / sampleRate;
+}
+
+export async function makeMix(recordings: Recording[]): Promise<Wav> {
   const buffers = (
     await Promise.all(
       recordings.map((r) => r.objectKey).map(ObjectStorage.getItem)
@@ -44,5 +54,8 @@ export async function makeMix(recordings: Recording[]): Promise<Buffer> {
     }
   });
 
-  return encode([res], { sampleRate: 44100 });
+  return {
+    duration: maxLen / 44100,
+    buffer: encode([res], { sampleRate: 44100 }),
+  };
 }
