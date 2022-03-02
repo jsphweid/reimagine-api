@@ -1,12 +1,18 @@
 import { ApolloServer } from "apollo-server-lambda";
 import { APIGatewayProxyHandler } from "aws-lambda";
 
+import { genContext } from "./context";
 import { resolvers } from "./resolvers";
 import { typeDefs } from "./type-defs";
+import { Utils } from "./utils";
+
+const parseToken = (event: any) =>
+  Utils.parseTokenFromAuthHeader(event.headers.Authorization);
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  context: ({ event }) => genContext(parseToken(event)),
 });
 
 export const handler: APIGatewayProxyHandler = (
@@ -22,6 +28,11 @@ export const handler: APIGatewayProxyHandler = (
       callback
     );
   } else {
-    server.createHandler()(event, lambdaContext, callback);
+    server.createHandler({
+      cors: {
+        origin: "*",
+        credentials: true,
+      },
+    })(event, lambdaContext, callback);
   }
 };

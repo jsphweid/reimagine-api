@@ -37,6 +37,7 @@ const seg2 = {
 
 const rec1 = {
   id: "rec1",
+  duration: 1,
   segmentId: "seg1",
   userId: "user1",
   objectKey: "objectkey1",
@@ -46,6 +47,7 @@ const rec1 = {
 
 const rec2 = {
   id: "rec2",
+  duration: 2,
   segmentId: "seg2",
   userId: null,
   objectKey: "objectkey2",
@@ -162,12 +164,16 @@ describe("DB tests", () => {
   test("mix", async () => {
     const mix1 = {
       id: "mix1",
+      name: "some mix1",
+      duration: 1,
       arrangementId: "arrangementId1",
       objectKey: "objectKey1",
       dateCreated: new Date(),
     };
     const mix2 = {
       id: "mix2",
+      name: "some mix2",
+      duration: 2,
       arrangementId: "arrangementId2",
       objectKey: "objectKey2",
       dateCreated: new Date(),
@@ -191,11 +197,13 @@ describe("DB tests", () => {
   test("arrangement", async () => {
     const arr1 = {
       id: "arr1",
+      name: "name1",
       pieceId: "pieceId1",
       dateCreated: new Date(),
     };
     const arr2 = {
       id: "arr2",
+      name: "name2",
       pieceId: "pieceId2",
       dateCreated: new Date(),
     };
@@ -231,6 +239,7 @@ describe("DB tests", () => {
     await DB.saveArrangement(
       {
         id: "mix2",
+        name: "some mix",
         pieceId: piece1.id,
         dateCreated: new Date(),
       },

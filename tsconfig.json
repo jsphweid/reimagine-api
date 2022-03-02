@@ -2,10 +2,13 @@
   "compilerOptions": {
     "sourceMap": true,
     "lib": ["es6", "esnext"],
-    "target": "es6",
+    "target": "es5",
+    "outDir": "./build",
     "moduleResolution": "node",
     "strict": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true
   },
+  "include": ["./src/**/*"],
   "exclude": ["node_modules"]
 }

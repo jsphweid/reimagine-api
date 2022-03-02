@@ -145,4 +145,8 @@ export namespace Utils {
       )
     );
   }
+
+  export function parseTokenFromAuthHeader(authHeader?: string) {
+    return authHeader ? authHeader.split(" ")[1] : "";
+  }
 }

@@ -1,11 +1,11 @@
-import { App } from "@aws-cdk/core";
+import * as cdk from "aws-cdk-lib";
 
-import { ReimagineStack } from "./stack";
+import { ReimagineApi } from "./stack";
 
-const app = new App();
+const app = new cdk.App();
 
-new ReimagineStack(app, "ReimagineStack", {
-  env: { region: "us-west-2" },
+new ReimagineApi.Stack(app, "ReimagineApi", {
+  env: { region: "us-east-1", account: "801215208692" },
 });
 
 app.synth();

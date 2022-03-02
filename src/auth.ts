@@ -22,6 +22,9 @@ export function verifyToken(token: string): Promise<ParsedToken> {
 
   const getKey: jwt.GetPublicKeyOrSecret = (header, callback) => {
     client.getSigningKey(header.kid, (err, key) => {
+      if (err) {
+        throw new Error(err.message);
+      }
       callback(null, key.getPublicKey());
     });
   };
@@ -39,6 +42,7 @@ export function verifyToken(token: string): Promise<ParsedToken> {
         if (decoded) {
           resolve(decoded as ParsedToken);
         } else {
+          console.error(err);
           reject(err);
         }
       }

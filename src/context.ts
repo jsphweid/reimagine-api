@@ -5,9 +5,7 @@ export interface Context {
   now: Date;
 }
 
-export const genContext = ({ req }: any): Promise<Context> => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader ? authHeader.split(" ")[1] : "";
+export const genContext = (token: string): Promise<Context> => {
   return Executor.fromToken(token).then((executor) => ({
     executor,
     now: new Date(),
