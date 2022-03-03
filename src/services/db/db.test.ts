@@ -1,5 +1,4 @@
 import * as AWS from "aws-sdk";
-import { Midi } from "@tonejs/midi";
 
 import { DB } from ".";
 import { Utils } from "../../utils";
@@ -15,22 +14,24 @@ const tableName = process.env.DYNAMODB_TABLE_NAME || "ReimagineTestTable";
 
 const seg1 = {
   id: "seg1",
+  bpm: 5,
   arrangementId: "arrangement1",
   lowestNote: 1,
   highestNote: 2,
   difficulty: 3,
-  midiJson: new Midi(),
+  notes: [],
   offset: 1.111,
   dateCreated: new Date(),
 };
 
 const seg2 = {
   id: "seg2",
+  bpm: 5,
   arrangementId: "arrangement2",
   lowestNote: 2,
   highestNote: 3,
   difficulty: 4,
-  midiJson: new Midi(),
+  notes: [],
   offset: 2.222,
   dateCreated: new Date(),
 };
@@ -164,7 +165,6 @@ describe("DB tests", () => {
   test("mix", async () => {
     const mix1 = {
       id: "mix1",
-      name: "some mix1",
       duration: 1,
       arrangementId: "arrangementId1",
       objectKey: "objectKey1",
@@ -172,7 +172,6 @@ describe("DB tests", () => {
     };
     const mix2 = {
       id: "mix2",
-      name: "some mix2",
       duration: 2,
       arrangementId: "arrangementId2",
       objectKey: "objectKey2",
@@ -212,9 +211,10 @@ describe("DB tests", () => {
       id: "seg1",
       arrangementId: "arrangement1",
       lowestNote: 1,
+      bpm: 1,
       highestNote: 2,
       difficulty: 3,
-      midiJson: new Midi(),
+      notes: [],
       offset: 1.111,
       dateCreated: new Date(),
     };
