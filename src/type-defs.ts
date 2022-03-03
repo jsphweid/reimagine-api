@@ -1,14 +1,23 @@
 import { gql } from "apollo-server-lambda";
 
 export const typeDefs = gql`
+  type Note {
+    time: Float!
+    midi: Int!
+    duration: Float!
+    velocity: Float!
+    lyric: String
+  }
+
   type Segment {
     id: String!
+    bpm: Float!
     arrangementId: String!
     difficulty: Int
-    midiJson: String!
-    offset: Float
-    highestNote: Int
-    lowestNote: Int
+    notes: [Note!]!
+    offset: Float!
+    highestNote: Int!
+    lowestNote: Int!
     dateCreated: String!
   }
 

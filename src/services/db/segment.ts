@@ -1,15 +1,16 @@
-import { Midi } from "@tonejs/midi";
+import { Note } from "midi-segmentizer";
 
 import { Utils } from "../../utils";
 import { documentClient, tableName } from "./db-utils";
 
 export interface Segment {
   id: string;
+  bpm: number;
   arrangementId: string;
   lowestNote: number;
   highestNote: number;
   difficulty?: number | null;
-  midiJson: Midi;
+  notes: Note[];
   offset: number;
   numRecordings?: number;
   dateCreated: Date;
@@ -22,8 +23,9 @@ function mapSegment(item: any): Segment {
     lowestNote: item["Analysis"]["LowestNote"],
     highestNote: item["Analysis"]["HighestNote"],
     difficulty: item["Analysis"]["Difficulty"],
-    midiJson: Utils.jsonStringToMidi(item["MidiJson"]),
+    notes: item["Notes"],
     offset: item["OffsetTime"],
+    bpm: item["BPM"],
     numRecordings: item["RecordingCount"],
     dateCreated: new Date(item["DateCreated"]),
   };
@@ -41,7 +43,8 @@ function mapSegmentToDbItem(segment: Segment) {
       HighestNote: segment.highestNote,
       Difficulty: segment.difficulty,
     },
-    MidiJson: Utils.midiToJsonString(segment.midiJson),
+    BPM: segment.bpm,
+    Notes: segment.notes,
     OffsetTime: segment.offset,
     RecordingCount: 0,
     "GSI1-PK": segment.arrangementId,

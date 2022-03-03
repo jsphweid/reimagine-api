@@ -1,4 +1,3 @@
-import { Midi } from "@tonejs/midi";
 import { documentClient } from "./services/db/db-utils";
 import { ObjectStorage } from "./services/object-storage";
 
@@ -53,29 +52,16 @@ export namespace Utils {
     );
   };
 
-  export function midiToJsonString(midi: Midi): string {
-    return JSON.stringify(midi.toJSON());
-  }
-
-  export function jsonStringToMidi(str: string): Midi {
-    const midiJson = new Midi();
-    midiJson.fromJSON(JSON.parse(str));
-    return midiJson;
-  }
-
-  export function serialize<T extends { dateCreated?: Date; midiJson?: Midi }>(
-    obj: T
-  ) {
+  export function serialize<T extends { dateCreated?: Date }>(obj: T) {
     return {
       ...obj,
       dateCreated: obj.dateCreated ? obj.dateCreated.toISOString() : undefined,
-      midiJson: obj.midiJson ? midiToJsonString(obj.midiJson) : undefined,
     };
   }
 
-  export function maybeSerialize<
-    T extends { dateCreated?: Date; midiJson?: Midi }
-  >(obj: T | null) {
+  export function maybeSerialize<T extends { dateCreated?: Date }>(
+    obj: T | null
+  ) {
     return obj ? serialize(obj) : null;
   }
 
