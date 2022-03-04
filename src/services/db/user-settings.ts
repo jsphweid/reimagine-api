@@ -10,6 +10,11 @@ interface UserSettings {
   notesOnRecordingPlay?: boolean | null;
 }
 
+export const DEFAULT_USER_SETTINGS = {
+  notesOnSegmentPlay: true,
+  metronomeOnSegmentPlay: true,
+};
+
 export async function _getUserSettings(userId: string): Promise<UserSettings> {
   const res = await documentClient
     .get({
@@ -21,7 +26,7 @@ export async function _getUserSettings(userId: string): Promise<UserSettings> {
     return res.Item.Preferences;
   }
 
-  return _upsertUserSettings(userId, { notesOnSegmentPlay: true }, false);
+  return _upsertUserSettings(userId, DEFAULT_USER_SETTINGS, false);
 }
 
 export async function _upsertUserSettings(

@@ -7,6 +7,7 @@ import { DB } from "./services/db";
 import { Utils } from "./utils";
 import { ObjectStorage } from "./services/object-storage";
 import { getDuration, makeMix } from "./wav";
+import { DEFAULT_USER_SETTINGS } from "./services/db/user-settings";
 
 const _rateLimiter = getGraphQLRateLimiter({
   identifyContext: (ctx) => ctx.id,
@@ -38,8 +39,13 @@ export const resolvers: Resolvers = {
   },
   Query: {
     getUserSettingsByUserId: (_, args, context) => {
-      Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
-      return DB.getUserSettings(args.userId);
+      const userId = args.userId;
+      if (userId) {
+        Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(userId));
+        return DB.getUserSettings(userId);
+      } else {
+        return DEFAULT_USER_SETTINGS;
+      }
     },
     getMixesByArrangementId: async (_, args) => {
       const mixes = await DB.getMixesByArrangementId(args.arrangementId);

@@ -89,7 +89,7 @@ export const typeDefs = gql`
   }
 
   type Query {
-    getUserSettingsByUserId(userId: String!): UserSettings
+    getUserSettingsByUserId(userId: String): UserSettings
     getRecordingsByIds(recordingIds: [String!]!): [Recording]
     getRecordingsByUserId(userId: String!): [Recording!]
     getMixesByArrangementId(arrangementId: String!): [Mix!]
