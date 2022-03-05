@@ -9,7 +9,11 @@ const prodUser = "google-oauth2|107262559032876162394";
 
 const localConfig = { endpoint: "http://localhost:4566", region: "local-env" };
 const localDDB = new AWS.DynamoDB.DocumentClient(localConfig);
-const localS3 = new AWS.S3(localConfig);
+const localS3 = new AWS.S3({
+  ...localConfig,
+  s3ForcePathStyle: true,
+  region: "local-env",
+});
 const localBucketName = "reimagine-test-bucket";
 const localTableName = "ReimagineTestTable";
 const devUser = "google-oauth2|107262559032876162394";
@@ -30,16 +34,18 @@ async function transferS3(objectKeys) {
     const obj = await remoteS3
       .getObject({ Key: key, Bucket: remoteBucketName })
       .promise();
-    await localS3.upload({
-      Bucket: localBucketName,
-      Key: key,
-      Body: obj.Body,
-    });
+    await localS3
+      .upload({
+        Bucket: localBucketName,
+        Key: key,
+        Body: obj.Body,
+      })
+      .promise();
   }
 }
 
 function transferDynamoDB() {
-  const objectKeys = [];
+  const objectKeys = new Set();
   remoteDDB
     .scan({ TableName: remoteTableName })
     .promise()
@@ -50,11 +56,11 @@ function transferDynamoDB() {
           .put({ TableName: localTableName, Item: changeItem(item) })
           .promise();
         if (item["ObjectKey"]) {
-          objectKeys.push(item["ObjectKey"]);
+          objectKeys.add(item["ObjectKey"]);
         }
       }
 
-      await transferS3(objectKeys);
+      await transferS3(Array.from(objectKeys));
     });
 }
 
