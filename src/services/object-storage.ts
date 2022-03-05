@@ -19,7 +19,6 @@ export namespace ObjectStorage {
         Bucket: bucketName,
         Key: key,
         Body: body,
-        ContentType: "image/png",
       })
       .promise();
 

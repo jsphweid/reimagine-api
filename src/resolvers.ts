@@ -30,11 +30,25 @@ export const resolvers: Resolvers = {
       return DB.getArrangementById(arrId).then(Utils.maybeSerialize);
     },
   },
+  Piece: {
+    arrangements: async (source) => {
+      // TODO: use mapper
+      const pieceId: string = (source as any).id;
+      const arrangements = await DB.getArrangementsByPieceId(pieceId);
+      return arrangements.map(Utils.serialize);
+    },
+  },
   Arrangement: {
     piece: async (source) => {
       // TODO: use mapper
       const pieceId: string = (source as any).pieceId;
       return DB.getPieceById(pieceId).then(Utils.maybeSerialize);
+    },
+    mixes: async (source) => {
+      // TODO: use mapper
+      const arrangementId: string = (source as any).id;
+      const res = await DB.getMixesByArrangementId(arrangementId);
+      return res.map(Utils.attachPresigned).map(Utils.serialize);
     },
   },
   Query: {
@@ -47,6 +61,10 @@ export const resolvers: Resolvers = {
         return DEFAULT_USER_SETTINGS;
       }
     },
+    getPieceById: async (_, args) => {
+      const res = await DB.getPieceById(args.pieceId);
+      return Utils.maybeSerialize(res);
+    },
     getMixesByArrangementId: async (_, args) => {
       const mixes = await DB.getMixesByArrangementId(args.arrangementId);
       return mixes.map(Utils.serialize).map(Utils.attachPresigned);
@@ -58,6 +76,10 @@ export const resolvers: Resolvers = {
     getArrangementsByPieceId: async (_, args) => {
       const res = await DB.getArrangementsByPieceId(args.pieceId);
       return res.map(Utils.serialize);
+    },
+    getArrangementById: async (_, args) => {
+      const res = await DB.getArrangementById(args.arrangementId);
+      return Utils.maybeSerialize(res);
     },
     getArrangementByIds: async (_, args) => {
       const res = await Promise.all(
@@ -87,10 +109,11 @@ export const resolvers: Resolvers = {
       const res = await DB.getNextSegment();
       return Utils.serialize(res);
     },
-    getMixesByUserId: async (parent, args, context, info) => {
+    getMixesWithMe: async (parent, args, context, info) => {
       await limit({ parent, args, context, info }, { max: 5, window: "10s" });
-      Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
-      const recordings = await DB.getRecordingsByUserId(args.userId);
+      const userId = context.executor?.userId;
+      if (!userId) return [];
+      const recordings = await DB.getRecordingsByUserId(userId);
       const recordingIds = Utils.removeDuplicates(recordings).map((r) => r.id);
       const mixes = Utils.flatten(
         await Promise.all(recordingIds.map(DB.getMixesByRecordingId))

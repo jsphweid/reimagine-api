@@ -42,12 +42,15 @@ export const typeDefs = gql`
     id: String!
     name: String!
     piece: Piece
+    pieceId: String!
+    mixes: [Mix!]
     dateCreated: String!
   }
 
   type Piece {
     id: String!
     name: String
+    arrangements: [Arrangement!]
     dateCreated: String!
   }
 
@@ -94,10 +97,12 @@ export const typeDefs = gql`
     getRecordingsByUserId(userId: String!): [Recording!]
     getMixesByArrangementId(arrangementId: String!): [Mix!]
     getMixesByRecordingId(recordingId: String!): [Mix!]
-    getMixesByUserId(userId: String!): [Mix!]
+    getMixesWithMe: [Mix!]!
+    getArrangementById(arrangementId: String!): Arrangement
     getArrangementByIds(arrangementIds: [String!]!): [Arrangement]
     getArrangementsByPieceId(pieceId: String!): [Arrangement!]
-    getAllPieces: [Piece]
+    getAllPieces: [Piece!]
+    getPieceById(pieceId: String!): Piece
 
     # not passing a segmentId returns a random segment...
     getSegmentById(segmentId: String!): Segment
