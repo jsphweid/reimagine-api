@@ -33,6 +33,7 @@ export const typeDefs = gql`
   type Mix {
     id: String!
     url: String!
+    isPartial: Boolean!
     duration: Float!
     dateCreated: String!
     arrangement: Arrangement
@@ -81,6 +82,11 @@ export const typeDefs = gql`
       sampleRate: Int!
     ): Recording
 
+    createMix(
+      recordingIds: [String!]!
+      fill: Boolean
+      allowPartial: Boolean
+    ): Mix
     createRandomMix: Mix
     createPiece(name: String!): Piece
     createSimpleArrangement(

@@ -6,8 +6,9 @@ import Executor from "./executor";
 import { DB } from "./services/db";
 import { Utils } from "./utils";
 import { ObjectStorage } from "./services/object-storage";
-import { getDuration, makeMix } from "./wav";
+import * as Wav from "./wav";
 import { DEFAULT_USER_SETTINGS } from "./services/db/user-settings";
+import { Recording } from "./services/db/recording";
 
 const _rateLimiter = getGraphQLRateLimiter({
   identifyContext: (ctx) => ctx.id,
@@ -129,6 +130,89 @@ export const resolvers: Resolvers = {
       Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
       return DB.upsertUserSettings(args.userId, args.input);
     },
+    createMix: async (parent, args, context, info) => {
+      await limit({ parent, args, context, info }, { max: 3, window: "10s" });
+      const { allowPartial, fill, recordingIds } = args;
+      if (recordingIds.length === 0) {
+        throw new Error("Must have at least 1 recording...");
+      }
+      const recordings = await Promise.all(
+        recordingIds.map(DB.getRecordingById)
+      ).then((res) => res.filter(Utils.isTruthy));
+
+      if (recordings.length !== recordingIds.length) {
+        throw new Error("Couldn't find all the necessary recordings.");
+      }
+
+      const existingSegIds = new Set();
+
+      recordings.forEach((r) => {
+        if (existingSegIds.has(r.segmentId)) {
+          throw new Error("Can't mix two recordings with the same segment.");
+        } else {
+          existingSegIds.add(r.segmentId);
+        }
+      });
+
+      const arrId = await DB.getArrangementIdFromRecording(recordings[0]);
+      const segments = await DB.getSegmentsByArrangementId(arrId!);
+      const range = allowPartial ? Utils.getRange(recordings, segments) : null;
+      const segmentsLookup = Utils.createLookup(segments);
+
+      let missingSegs = segments.filter((seg) => !existingSegIds.has(seg.id));
+
+      if (missingSegs && !allowPartial) {
+        throw new Error(
+          `Can't create a complete mix because you're missing ${missingSegs.length} recordings... Consider setting 'allowPartial`
+        );
+      }
+
+      // we may only care about segments in a range
+      if (range) {
+        missingSegs = missingSegs.filter(
+          (seg) => range.min <= seg.offset && seg.offset <= range.max
+        );
+      }
+
+      const choices = recordings.map((r) => ({
+        ...r,
+        offset: segmentsLookup[r.segmentId]!.offset,
+        recordingId: r.id,
+      }));
+
+      if (fill) {
+        for (const segment of missingSegs) {
+          const recording = await DB.getRandomRecording(segment.id);
+
+          if (!recording) {
+            throw new Error("There aren't enough recordings to make a mix...");
+          }
+
+          choices.push({
+            ...recording,
+            offset: segment.offset,
+            recordingId: recording.id,
+          });
+        }
+      }
+
+      // TODO: refactor this since it's mostly the same as other fn...
+      const { buffer, duration } = await Wav.makeMix(choices);
+      const objectKey = `mix-${Utils.generateGUID()}.wav`;
+      await ObjectStorage.uploadBuffer(buffer, objectKey);
+      const id = Utils.generateGUID();
+      const dateCreated = new Date();
+      const mix = await DB.saveMix({
+        id,
+        isPartial: choices.length === segments.length,
+        arrangementId: arrId!,
+        duration,
+        objectKey,
+        dateCreated,
+        recordingIds: choices.map((c) => c.recordingId),
+      });
+      return Utils.attachPresigned(Utils.serialize(mix));
+    },
     createRandomMix: async (_, __, context) => {
       // NOTE: very heavy handed way of doing this but should be fine while low load
       Executor.run(context.executor, (e) => e.assertIsAdmin());
@@ -141,8 +225,7 @@ export const resolvers: Resolvers = {
         const segments = await DB.getSegmentsByArrangementId(arrangement.id);
         const choices = [];
         for (const segment of segments) {
-          const recordings = await DB.getRecordingsBySegmentId(segment.id);
-          const choice = Utils.pickRandom(recordings);
+          const choice = await DB.getRandomRecording(segment.id);
 
           if (!choice) {
             break;
@@ -157,25 +240,21 @@ export const resolvers: Resolvers = {
 
         if (segments.length === choices.length) {
           // We have at least one of each!
-          const { buffer, duration } = await makeMix(choices);
+          const { buffer, duration } = await Wav.makeMix(choices);
           const objectKey = `mix-${Utils.generateGUID()}.wav`;
           await ObjectStorage.uploadBuffer(buffer, objectKey);
           const id = Utils.generateGUID();
           const dateCreated = new Date();
-          await DB.saveMix({
+          const mix = await DB.saveMix({
             id,
+            isPartial: false,
             arrangementId: arrangement.id,
             duration,
             objectKey,
             dateCreated,
             recordingIds: choices.map((c) => c.recordingId),
           });
-          return Utils.serialize({
-            id,
-            duration,
-            dateCreated,
-            url: ObjectStorage.getPresignedUrl(objectKey),
-          });
+          return Utils.attachPresigned(Utils.serialize(mix));
         }
       }
 
@@ -228,7 +307,7 @@ export const resolvers: Resolvers = {
         base64Blob.replace("data:audio/wav;base64,", ""),
         "base64"
       );
-      const duration = getDuration(buffer);
+      const duration = Wav.getDuration(buffer);
       const recording = {
         id,
         segmentId,

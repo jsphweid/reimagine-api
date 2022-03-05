@@ -4,6 +4,7 @@ import { Utils } from "../../utils";
 interface Mix {
   id: string;
   arrangementId: string;
+  isPartial: boolean;
   objectKey: string;
   duration: number;
   dateCreated: Date;
@@ -12,6 +13,7 @@ interface Mix {
 function mapMix(item: any): Mix {
   return {
     id: item["PK"],
+    isPartial: item["IsPartial"] ?? false,
     duration: item["Duration"],
     arrangementId: item["GSI1-PK"],
     objectKey: item["ObjectKey"],
@@ -23,6 +25,7 @@ function mapMixToDbItem(mix: Mix, recordingId: string, date: string) {
   return {
     PK: recordingId,
     SK: `Mix#${date}#${mix.id}`,
+    IsPartial: mix.isPartial,
     "GSI1-PK": mix.id,
     "GSI1-SK": recordingId,
     Duration: mix.duration,
@@ -47,6 +50,7 @@ export async function _saveMix(
         PK: mix.id,
         SK: mix.id,
         Type: "Mix",
+        IsPartial: mix.isPartial,
         DateCreated: date,
         Duration: mix.duration,
         ObjectKey: mix.objectKey,
@@ -106,6 +110,7 @@ export async function _getMixesByRecordingId(
       res.Items
         ? res.Items.map((item) => ({
             id: item["GSI1-PK"],
+            isPartial: item["IsPartial"] ?? false,
             arrangementId: item["ArrangementId"],
             duration: item["Duration"],
             objectKey: item["ObjectKey"],

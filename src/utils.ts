@@ -1,4 +1,7 @@
+import { Note } from "midi-segmentizer";
 import { documentClient } from "./services/db/db-utils";
+import { Recording } from "./services/db/recording";
+import { Segment } from "./services/db/segment";
 import { ObjectStorage } from "./services/object-storage";
 
 export namespace Utils {
@@ -18,6 +21,12 @@ export namespace Utils {
       return v.toString(16);
     });
   };
+
+  type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T;
+
+  function truthy<T>(value: T): value is Truthy<T> {
+    return !!value;
+  }
 
   export const getNowPrettyFormatted = (): string =>
     new Date()
@@ -134,5 +143,33 @@ export namespace Utils {
 
   export function parseTokenFromAuthHeader(authHeader?: string) {
     return authHeader ? authHeader.split(" ")[1] : "";
+  }
+
+  export function createLookup<T extends { id: string }>(
+    arr: T[]
+  ): { [key: string]: T } {
+    return arr.reduce(
+      (prev, curr) => ({ ...prev, [curr.id]: curr }),
+      {} as { [key: string]: T }
+    );
+  }
+
+  export function getMaxNoteEnd(notes: Note[]): number {
+    return notes.reduce(
+      (prev, { time, duration }) => Math.max(prev, time + duration),
+      0
+    );
+  }
+
+  export function getRange(recordings: Recording[], segments: Segment[]) {
+    const segmentsLookup = createLookup(segments);
+    let min = Infinity;
+    let max = -Infinity;
+    recordings.forEach((r) => {
+      const segment = segmentsLookup[r.segmentId]!;
+      min = Math.min(min, segment.offset);
+      max = Math.max(max, segment.offset + getMaxNoteEnd(segment.notes));
+    });
+    return { min, max };
   }
 }
