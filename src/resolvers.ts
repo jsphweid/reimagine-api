@@ -87,10 +87,11 @@ export const resolvers: Resolvers = {
       const res = await DB.getNextSegment();
       return Utils.serialize(res);
     },
-    getMixesByUserId: async (parent, args, context, info) => {
+    getMixesWithMe: async (parent, args, context, info) => {
       await limit({ parent, args, context, info }, { max: 5, window: "10s" });
-      Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
-      const recordings = await DB.getRecordingsByUserId(args.userId);
+      const userId = context.executor?.userId;
+      if (!userId) return [];
+      const recordings = await DB.getRecordingsByUserId(userId);
       const recordingIds = Utils.removeDuplicates(recordings).map((r) => r.id);
       const mixes = Utils.flatten(
         await Promise.all(recordingIds.map(DB.getMixesByRecordingId))

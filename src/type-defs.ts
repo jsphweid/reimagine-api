@@ -94,7 +94,7 @@ export const typeDefs = gql`
     getRecordingsByUserId(userId: String!): [Recording!]
     getMixesByArrangementId(arrangementId: String!): [Mix!]
     getMixesByRecordingId(recordingId: String!): [Mix!]
-    getMixesByUserId(userId: String!): [Mix!]
+    getMixesWithMe: [Mix!]!
     getArrangementByIds(arrangementIds: [String!]!): [Arrangement]
     getArrangementsByPieceId(pieceId: String!): [Arrangement!]
     getAllPieces: [Piece]
