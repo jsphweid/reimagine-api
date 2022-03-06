@@ -4,6 +4,7 @@ import {
   _getArrangementsByPieceId,
   _saveArrangement,
 } from "./arrangement";
+import { _getArrangementIdFromRecording, _getRandomRecording } from "./helpers";
 import {
   _getMixesByArrangementId,
   _getMixesByRecordingId,
@@ -53,4 +54,7 @@ export namespace DB {
   export const getAllPieces = _getAllPieces;
   export const getPieceById = _getPieceById;
   export const savePiece = _savePiece;
+
+  export const getArrangementIdFromRecording = _getArrangementIdFromRecording;
+  export const getRandomRecording = _getRandomRecording;
 }

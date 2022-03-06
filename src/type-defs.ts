@@ -33,6 +33,7 @@ export const typeDefs = gql`
   type Mix {
     id: String!
     url: String!
+    isPartial: Boolean!
     duration: Float!
     dateCreated: String!
     arrangement: Arrangement
@@ -44,6 +45,8 @@ export const typeDefs = gql`
     piece: Piece
     pieceId: String!
     mixes: [Mix!]
+    segments: [Segment!]
+    myRecordings: [Recording!]
     dateCreated: String!
   }
 
@@ -81,6 +84,11 @@ export const typeDefs = gql`
       sampleRate: Int!
     ): Recording
 
+    createMix(
+      recordingIds: [String!]!
+      fill: Boolean
+      allowPartial: Boolean
+    ): Mix
     createRandomMix: Mix
     createPiece(name: String!): Piece
     createSimpleArrangement(
@@ -93,12 +101,14 @@ export const typeDefs = gql`
 
   type Query {
     getUserSettingsByUserId(userId: String): UserSettings
+    getRecordingById(recordingId: String!): Recording
     getRecordingsByIds(recordingIds: [String!]!): [Recording]
     getRecordingsByUserId(userId: String!): [Recording!]
     getMixesByArrangementId(arrangementId: String!): [Mix!]
     getMixesByRecordingId(recordingId: String!): [Mix!]
     getMixesWithMe: [Mix!]!
     getArrangementById(arrangementId: String!): Arrangement
+    getArrangementByRecordingId(recordingId: String!): Arrangement
     getArrangementByIds(arrangementIds: [String!]!): [Arrangement]
     getArrangementsByPieceId(pieceId: String!): [Arrangement!]
     getAllPieces: [Piece!]

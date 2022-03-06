@@ -2,6 +2,7 @@ import * as AWS from "aws-sdk";
 
 import { DB } from ".";
 import { Utils } from "../../utils";
+import { DEFAULT_USER_SETTINGS } from "./user-settings";
 
 AWS.config.region = "local-env";
 
@@ -98,17 +99,11 @@ describe("DB tests", () => {
   test("userSettings", async () => {
     const userId = "abc123";
     const update = { notesOnSegmentPlay: false, notesOnRecord: false };
+    const combined = { ...DEFAULT_USER_SETTINGS, ...update };
 
     // should retrieve the default response since it doesn't exist
-    expect(await DB.getUserSettings(userId)).toEqual({
-      notesOnSegmentPlay: true,
-    });
-
-    const combined = { notesOnRecordingPlay: true, notesOnSegmentPlay: true };
-    expect(
-      await DB.upsertUserSettings(userId, { notesOnRecordingPlay: true })
-    ).toEqual(combined);
-
+    expect(await DB.getUserSettings(userId)).toEqual(DEFAULT_USER_SETTINGS);
+    expect(await DB.upsertUserSettings(userId, update)).toEqual(combined);
     expect(await DB.getUserSettings(userId)).toEqual(combined);
   });
 
@@ -166,6 +161,7 @@ describe("DB tests", () => {
     const mix1 = {
       id: "mix1",
       duration: 1,
+      isPartial: false,
       arrangementId: "arrangementId1",
       objectKey: "objectKey1",
       dateCreated: new Date(),
@@ -173,6 +169,7 @@ describe("DB tests", () => {
     const mix2 = {
       id: "mix2",
       duration: 2,
+      isPartial: true,
       arrangementId: "arrangementId2",
       objectKey: "objectKey2",
       dateCreated: new Date(),

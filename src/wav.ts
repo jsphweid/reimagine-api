@@ -3,7 +3,7 @@ import { encode, decode } from "node-wav";
 
 import { ObjectStorage } from "./services/object-storage";
 
-interface Recording {
+export interface Recording {
   sampleRate: number;
   objectKey: string;
   offset: number;
@@ -31,7 +31,7 @@ export async function makeMix(recordings: Recording[]): Promise<Wav> {
     samples: number[];
     startIndex: number;
   }>;
-  let maxLen = 0;
+  let len = 0;
 
   // find length and resample
   buffers.forEach((buffer, i) => {
@@ -43,19 +43,40 @@ export async function makeMix(recordings: Recording[]): Promise<Wav> {
     const offset = recordings[i].offset;
     const startIndex = Math.ceil(offset * 44100);
     arrs.push({ samples, offset, startIndex });
-    maxLen = Math.max(maxLen, Math.ceil(startIndex + samples.length));
+    len = Math.max(len, Math.ceil(startIndex + samples.length));
   });
 
   // mix!
-  const res = new Float32Array(maxLen);
+  let res = new Float32Array(len);
   arrs.forEach((arr) => {
     for (let i = 0; i < arr.samples.length; i++) {
       res[i + arr.startIndex] += arr.samples[i];
     }
   });
 
+  // trim
+  let firstNonZero: number | null = null;
+  let lastNonZero: number | null = null;
+  for (let i = 0; i < len; i++) {
+    if (firstNonZero === null && res[i] !== 0) {
+      firstNonZero = i;
+    }
+    if (res[i] > 0) {
+      lastNonZero = i;
+    }
+  }
+  if (firstNonZero && lastNonZero && firstNonZero < lastNonZero) {
+    const newLen = lastNonZero - firstNonZero;
+    const shortened = new Float32Array(newLen);
+    for (let i = 0; i < newLen; i++) {
+      shortened[i] = res[i + firstNonZero];
+    }
+    len = newLen;
+    res = shortened;
+  }
+
   return {
-    duration: maxLen / 44100,
+    duration: len / 44100,
     buffer: encode([res], { sampleRate: 44100 }),
   };
 }

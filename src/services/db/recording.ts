@@ -1,5 +1,8 @@
 import { documentClient, tableName } from "./db-utils";
 
+// by default we care about the most recent recordings more (greatest first)
+const DEFAULT_SCAN_INDEX_FORWARD = false;
+
 export interface Recording {
   id: string;
   segmentId: string;
@@ -89,6 +92,7 @@ export async function _getRecordingsByUserId(
         ":userId": userId,
         ":startsWith": "Recording#",
       },
+      ScanIndexForward: DEFAULT_SCAN_INDEX_FORWARD,
     })
     .promise()
     .then((res) => {
@@ -114,6 +118,7 @@ export async function _getRecordingsBySegmentId(
         ":segmentId": segmentId,
         ":startsWith": "Recording#",
       },
+      ScanIndexForward: DEFAULT_SCAN_INDEX_FORWARD,
     })
     .promise()
     .then((res) => {
