@@ -8,7 +8,6 @@ import { Utils } from "./utils";
 import { ObjectStorage } from "./services/object-storage";
 import * as Wav from "./wav";
 import { DEFAULT_USER_SETTINGS } from "./services/db/user-settings";
-import { Recording } from "./services/db/recording";
 
 const _rateLimiter = getGraphQLRateLimiter({
   identifyContext: (ctx) => ctx.id,
@@ -51,6 +50,25 @@ export const resolvers: Resolvers = {
       const res = await DB.getMixesByArrangementId(arrangementId);
       return res.map(Utils.attachPresigned).map(Utils.serialize);
     },
+    segments: async (source) => {
+      // TODO: use mapper
+      const arrangementId: string = (source as any).id;
+      const segments = await DB.getSegmentsByArrangementId(arrangementId);
+      return segments.map(Utils.serialize);
+    },
+    myRecordings: async (source, _, context) => {
+      // TODO: use mapper
+      const arrangementId: string = (source as any).id;
+      const segments = await DB.getSegmentsByArrangementId(arrangementId);
+      const segmentIds = new Set(segments.map((s) => s.id));
+      const userId = context.executor?.userId;
+      if (!userId) return null;
+      const recordings = await DB.getRecordingsByUserId(userId);
+      return recordings
+        .filter((r) => segmentIds.has(r.segmentId))
+        .map(Utils.attachPresigned)
+        .map(Utils.serialize);
+    },
   },
   Query: {
     getUserSettingsByUserId: (_, args, context) => {
@@ -87,6 +105,17 @@ export const resolvers: Resolvers = {
         args.arrangementIds.map(DB.getArrangementById)
       );
       return res.map(Utils.maybeSerialize);
+    },
+    getArrangementByRecordingId: async (_, args) => {
+      const recording = await DB.getRecordingById(args.recordingId);
+      if (!recording) return null;
+      const arrangementId = await DB.getArrangementIdFromRecording(recording);
+      if (!arrangementId) return null;
+      return Utils.maybeSerialize(await DB.getArrangementById(arrangementId));
+    },
+    getRecordingById: async (_, args) => {
+      const res = await DB.getRecordingById(args.recordingId);
+      return Utils.maybeSerialize(Utils.maybeAttachedPresigned(res));
     },
     getRecordingsByIds: async (_, args) => {
       const res = await Promise.all(args.recordingIds.map(DB.getRecordingById));
