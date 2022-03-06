@@ -172,4 +172,11 @@ export namespace Utils {
     });
     return { min, max };
   }
+
+  export function sortSegments(segments: Segment[]) {
+    // sort by offset, so segments towards the beginning of the arrangement come first
+    // TODO: this should probably be done at the DB level since we the default ordering
+    // is pretty clear
+    return segments.sort((a, b) => (b.offset > a.offset ? -1 : 1));
+  }
 }

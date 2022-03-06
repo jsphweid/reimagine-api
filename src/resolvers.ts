@@ -54,7 +54,7 @@ export const resolvers: Resolvers = {
       // TODO: use mapper
       const arrangementId: string = (source as any).id;
       const segments = await DB.getSegmentsByArrangementId(arrangementId);
-      return segments.map(Utils.serialize);
+      return Utils.sortSegments(segments).map(Utils.serialize);
     },
     myRecordings: async (source, _, context) => {
       // TODO: use mapper
