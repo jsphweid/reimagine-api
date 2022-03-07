@@ -100,7 +100,7 @@ export const typeDefs = gql`
   }
 
   type Query {
-    getUserSettingsByUserId(userId: String): UserSettings
+    getMyUserSettings: UserSettings!
     getRecordingById(recordingId: String!): Recording
     getRecordingsByIds(recordingIds: [String!]!): [Recording]
     getRecordingsByUserId(userId: String!): [Recording!]

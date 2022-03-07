@@ -71,14 +71,9 @@ export const resolvers: Resolvers = {
     },
   },
   Query: {
-    getUserSettingsByUserId: (_, args, context) => {
-      const userId = args.userId;
-      if (userId) {
-        Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(userId));
-        return DB.getUserSettings(userId);
-      } else {
-        return DEFAULT_USER_SETTINGS;
-      }
+    getMyUserSettings: (_, __, context) => {
+      const userId = context.executor?.userId;
+      return userId ? DB.getUserSettings(userId) : DEFAULT_USER_SETTINGS;
     },
     getPieceById: async (_, args) => {
       const res = await DB.getPieceById(args.pieceId);
