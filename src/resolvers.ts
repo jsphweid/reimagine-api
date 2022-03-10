@@ -8,6 +8,8 @@ import { Utils } from "./utils";
 import { ObjectStorage } from "./services/object-storage";
 import * as Mix from "./mix";
 import { DEFAULT_USER_SETTINGS } from "./services/db/user-settings";
+import { Context } from "./context";
+import { synthSegment } from "./mix/synth";
 
 const _rateLimiter = getGraphQLRateLimiter({
   identifyContext: (ctx) => ctx.id,
@@ -293,25 +295,39 @@ export const resolvers: Resolvers = {
     },
     createSimpleArrangement: async (_, args, context) => {
       Executor.run(context.executor, (e) => e.assertIsAdmin());
-      const segments = segmentizeMidi(args.base64Blob);
+      const newArrangementId = Utils.generateGUID();
+      const segments = segmentizeMidi(args.base64Blob)?.map((s) => ({
+        ...s,
+        arrangementId: newArrangementId,
+        id: Utils.generateGUID(),
+        dateCreated: context.now,
+      }));
+
       if (!segments) {
         throw new Error("Invalid MIDI file.");
       }
-      const id = Utils.generateGUID();
       const arrangement = await DB.saveArrangement(
         {
-          id,
+          id: newArrangementId,
           name: args.name,
           pieceId: args.pieceId,
           dateCreated: context.now,
         },
-        segments.map((s) => ({
-          ...s,
-          arrangementId: id,
-          id: Utils.generateGUID(),
-          dateCreated: context.now,
-        }))
+        segments
       );
+
+      await Promise.all(
+        segments.map((segment) => {
+          saveRecording(
+            synthSegment(segment),
+            segment.id,
+            44100,
+            context.now,
+            null
+          );
+        })
+      );
+
       return Utils.serialize(arrangement);
     },
     createPiece: async (_, args, context) => {
@@ -332,24 +348,18 @@ export const resolvers: Resolvers = {
         throw new Error("For now only .wav recordings can be uploaded.");
       }
 
-      const id = Utils.generateGUID();
-      const objectKey = `recording-${Utils.generateGUID()}.wav`;
       const buffer = Buffer.from(
         base64Blob.replace("data:audio/wav;base64,", ""),
         "base64"
       );
-      const duration = Mix.getDurationOfWav(buffer);
-      const recording = {
-        id,
+
+      const recording = await saveRecording(
+        buffer,
         segmentId,
-        objectKey,
         sampleRate,
-        duration,
-        userId: context.executor?.userId || null,
-        dateCreated: context.now,
-      };
-      await ObjectStorage.uploadBuffer(buffer, objectKey);
-      await DB.saveRecording(recording);
+        context.now,
+        context.executor?.userId || null
+      );
       return Utils.serialize(Utils.attachPresigned(recording));
     },
     deleteArrangement: async (_, args, context) => {
@@ -364,3 +374,28 @@ export const resolvers: Resolvers = {
     },
   },
 };
+
+async function saveRecording(
+  buffer: Buffer,
+  segmentId: string,
+  sampleRate: number,
+  dateCreated: Date,
+  userId: string | null
+) {
+  const id = Utils.generateGUID();
+  const objectKey = `recording-${Utils.generateGUID()}.wav`;
+
+  const duration = Mix.getDurationOfWav(buffer);
+  const recording = {
+    id,
+    segmentId,
+    objectKey,
+    sampleRate,
+    duration,
+    userId,
+    dateCreated,
+  };
+  await ObjectStorage.uploadBuffer(buffer, objectKey);
+  await DB.saveRecording(recording);
+  return recording;
+}
