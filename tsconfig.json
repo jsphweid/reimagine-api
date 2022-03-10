@@ -9,6 +9,6 @@
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true
   },
-  "include": ["./src/**/*", "delete-where.js"],
+  "include": ["./src/**/*", "scripts/delete-where.js"],
   "exclude": ["node_modules"]
 }
