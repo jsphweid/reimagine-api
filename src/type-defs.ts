@@ -113,6 +113,7 @@ export const typeDefs = gql`
     getArrangementsByPieceId(pieceId: String!): [Arrangement!]
     getAllPieces: [Piece!]
     getPieceById(pieceId: String!): Piece
+    getSegmentsByArrangementId(arrangementId: String!): [Segment!]
 
     # not passing a segmentId returns a random segment...
     getSegmentById(segmentId: String!): Segment

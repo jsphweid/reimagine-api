@@ -6,7 +6,7 @@ import Executor from "./executor";
 import { DB } from "./services/db";
 import { Utils } from "./utils";
 import { ObjectStorage } from "./services/object-storage";
-import * as Wav from "./wav";
+import * as Mix from "./mix";
 import { DEFAULT_USER_SETTINGS } from "./services/db/user-settings";
 
 const _rateLimiter = getGraphQLRateLimiter({
@@ -48,7 +48,10 @@ export const resolvers: Resolvers = {
       // TODO: use mapper
       const arrangementId: string = (source as any).id;
       const res = await DB.getMixesByArrangementId(arrangementId);
-      return res.map(Utils.attachPresigned).map(Utils.serialize);
+      return res
+        .map(Utils.attachPresigned)
+        .map(Utils.serialize)
+        .sort((a, b) => (b.dateCreated > a.dateCreated ? 1 : -1));
     },
     segments: async (source) => {
       // TODO: use mapper
@@ -71,6 +74,10 @@ export const resolvers: Resolvers = {
     },
   },
   Query: {
+    getSegmentsByArrangementId: async (_, args) => {
+      const res = await DB.getSegmentsByArrangementId(args.arrangementId);
+      return res.map(Utils.serialize);
+    },
     getMyUserSettings: (_, __, context) => {
       const userId = context.executor?.userId;
       return userId ? DB.getUserSettings(userId) : DEFAULT_USER_SETTINGS;
@@ -221,14 +228,14 @@ export const resolvers: Resolvers = {
       }
 
       // TODO: refactor this since it's mostly the same as other fn...
-      const { buffer, duration } = await Wav.makeMix(choices);
-      const objectKey = `mix-${Utils.generateGUID()}.wav`;
+      const { buffer, duration } = await Mix.makeMix(choices);
+      const objectKey = `mix-${Utils.generateGUID()}.mp3`;
       await ObjectStorage.uploadBuffer(buffer, objectKey);
       const id = Utils.generateGUID();
       const dateCreated = new Date();
       const mix = await DB.saveMix({
         id,
-        isPartial: choices.length === segments.length,
+        isPartial: choices.length !== segments.length,
         arrangementId: arrId!,
         duration,
         objectKey,
@@ -264,8 +271,8 @@ export const resolvers: Resolvers = {
 
         if (segments.length === choices.length) {
           // We have at least one of each!
-          const { buffer, duration } = await Wav.makeMix(choices);
-          const objectKey = `mix-${Utils.generateGUID()}.wav`;
+          const { buffer, duration } = await Mix.makeMix(choices);
+          const objectKey = `mix-${Utils.generateGUID()}.mp3`;
           await ObjectStorage.uploadBuffer(buffer, objectKey);
           const id = Utils.generateGUID();
           const dateCreated = new Date();
@@ -331,7 +338,7 @@ export const resolvers: Resolvers = {
         base64Blob.replace("data:audio/wav;base64,", ""),
         "base64"
       );
-      const duration = Wav.getDuration(buffer);
+      const duration = Mix.getDurationOfWav(buffer);
       const recording = {
         id,
         segmentId,
