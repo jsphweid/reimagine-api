@@ -21,11 +21,10 @@ function mapMix(item: any): Mix {
   };
 }
 
-function mapMixToDbItem(mix: Mix, recordingId: string, date: string) {
+function mapMixRecording(mix: Mix, recordingId: string, date: string) {
   return {
     PK: recordingId,
     SK: `Mix#${date}#${mix.id}`,
-    IsPartial: mix.isPartial,
     "GSI1-PK": mix.id,
     "GSI1-SK": recordingId,
     Duration: mix.duration,
@@ -59,7 +58,7 @@ export async function _saveMix(
       },
     })
     .promise();
-  const items = mix.recordingIds.map((id) => mapMixToDbItem(mix, id, date));
+  const items = mix.recordingIds.map((id) => mapMixRecording(mix, id, date));
   await Utils.dynamoDbBatchWrite(tableName, items);
   return mix;
 }

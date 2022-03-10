@@ -49,6 +49,12 @@ export namespace ReimagineApi {
 
       const bucket = new s3.Bucket(this, "Bucket");
 
+      const lameLayer = lambda.LayerVersion.fromLayerVersionArn(
+        this,
+        "LameLayer",
+        "arn:aws:lambda:us-east-1:145266761615:layer:sox:1"
+      );
+
       const apiLambda = new lambda.Function(this, "ApiLambda", {
         runtime: lambda.Runtime.NODEJS_14_X,
         code: lambda.Code.fromAsset("../build"),
@@ -62,6 +68,7 @@ export namespace ReimagineApi {
           AUTH0_AUDIENCE: "https://api.carryoaky.com",
           AUTH0_DOMAIN: "carryoaky.us.auth0.com",
         },
+        layers: [lameLayer],
       });
 
       table.grantFullAccess(apiLambda);

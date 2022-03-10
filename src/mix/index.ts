@@ -1,7 +1,10 @@
 import { resample } from "wave-resampler";
-import { encode, decode } from "node-wav";
+import { decode, encode } from "node-wav";
+import { writeFileSync, readFileSync } from "fs";
 
-import { ObjectStorage } from "./services/object-storage";
+import { ObjectStorage } from "../services/object-storage";
+import { lame } from "./lame";
+import { spawnPromise } from "./spawn";
 
 export interface Recording {
   sampleRate: number;
@@ -9,17 +12,17 @@ export interface Recording {
   offset: number;
 }
 
-interface Wav {
+interface Mix {
   buffer: Buffer;
   duration: number;
 }
 
-export function getDuration(buffer: Buffer): number {
+export function getDurationOfWav(buffer: Buffer): number {
   const { sampleRate, channelData } = decode(buffer);
   return channelData[0].length / sampleRate;
 }
 
-export async function makeMix(recordings: Recording[]): Promise<Wav> {
+export async function makeMix(recordings: Recording[]): Promise<Mix> {
   const buffers = (
     await Promise.all(
       recordings.map((r) => r.objectKey).map(ObjectStorage.getItem)
@@ -75,8 +78,12 @@ export async function makeMix(recordings: Recording[]): Promise<Wav> {
     res = shortened;
   }
 
+  writeFileSync("/tmp/temp.wav", encode([res], { sampleRate: 44100 }));
+  await lame("--preset standard /tmp/temp.wav /tmp/temp.mp3");
+  const buffer = readFileSync("/tmp/temp.mp3");
+  await spawnPromise("ls", ["-la"]);
   return {
+    buffer,
     duration: len / 44100,
-    buffer: encode([res], { sampleRate: 44100 }),
   };
 }

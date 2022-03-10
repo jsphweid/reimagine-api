@@ -8,7 +8,7 @@
     "build": "rm -rf build && tsc && cp package.json ./build && cp package-lock.json ./build && cd build && npm i --production",
     "test": "./localstack_configure.sh && jest",
     "codegen": "graphql-codegen --config ./codegen.yml",
-    "start": "NODE_ENV=dev AWS_REGION=local-dev ts-node src/run-locally.ts",
+    "start": "LAME_PATH=/opt/homebrew/bin/lame NODE_ENV=dev AWS_REGION=local-dev ts-node src/run-locally.ts",
     "db:admin": "AWS_REGION=local-env DYNAMO_ENDPOINT=http://localhost:4566 dynamodb-admin"
   },
   "dependencies": {
