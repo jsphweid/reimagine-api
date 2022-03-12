@@ -9,6 +9,14 @@ export const typeDefs = gql`
     lyric: String
   }
 
+  input NoteInput {
+    time: Float!
+    midi: Int!
+    duration: Float!
+    velocity: Float!
+    lyric: String
+  }
+
   type Segment {
     id: String!
     bpm: Float!
@@ -19,6 +27,14 @@ export const typeDefs = gql`
     highestNote: Int!
     lowestNote: Int!
     dateCreated: String!
+    recordings: [Recording!]
+  }
+
+  input SegmentInput {
+    bpm: Float!
+    difficulty: Int
+    notes: [NoteInput!]!
+    offset: Float!
   }
 
   type Recording {
@@ -37,6 +53,7 @@ export const typeDefs = gql`
     duration: Float!
     dateCreated: String!
     arrangement: Arrangement
+    recordings: [Recording!]
   }
 
   type Arrangement {
@@ -95,6 +112,11 @@ export const typeDefs = gql`
       pieceId: String!
       name: String!
       base64Blob: String!
+    ): Arrangement
+    createArrangement(
+      pieceId: String!
+      name: String!
+      segments: [SegmentInput!]!
     ): Arrangement
     deleteArrangement(arrangementId: String!): String
   }

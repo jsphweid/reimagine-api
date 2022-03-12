@@ -10,6 +10,7 @@ import * as Mix from "./mix";
 import { DEFAULT_USER_SETTINGS } from "./services/db/user-settings";
 import { Context } from "./context";
 import { synthSegment } from "./mix/synth";
+import { Segment } from "./services/db/segment";
 
 const _rateLimiter = getGraphQLRateLimiter({
   identifyContext: (ctx) => ctx.id,
@@ -25,6 +26,12 @@ const limit: ReturnType<typeof getGraphQLRateLimiter> = async (obj1, obj2) => {
 };
 
 export const resolvers: Resolvers = {
+  Segment: {
+    recordings: async (source) => {
+      const res = await DB.getRecordingsBySegmentId(source.id);
+      return res.map(Utils.serialize).map(Utils.attachPresigned);
+    },
+  },
   Mix: {
     arrangement: async (source) => {
       // TODO: use mapper
@@ -293,6 +300,41 @@ export const resolvers: Resolvers = {
 
       return null;
     },
+    createArrangement: async (_, args, context) => {
+      Executor.run(context.executor, (e) => e.assertIsAdmin());
+      const newArrangementId = Utils.generateGUID();
+      if (!args.segments.length) {
+        throw new Error("Can't make an arrangement with no segments!");
+      }
+      const segments = args.segments.map((segment) => {
+        let highestNote = -Infinity;
+        let lowestNote = Infinity;
+        segment.notes.forEach((note) => {
+          highestNote = Math.max(highestNote, note.midi);
+          lowestNote = Math.min(lowestNote, note.midi);
+        });
+        return {
+          ...segment,
+          highestNote,
+          lowestNote,
+          id: Utils.generateGUID(),
+          dateCreated: context.now,
+          arrangementId: newArrangementId,
+        };
+      });
+
+      const arrangement = await DB.saveArrangement(
+        {
+          id: newArrangementId,
+          name: args.name,
+          pieceId: args.pieceId,
+          dateCreated: context.now,
+        },
+        segments
+      );
+      await savePlaceholderRecordings(segments, context);
+      return Utils.serialize(arrangement);
+    },
     createSimpleArrangement: async (_, args, context) => {
       Executor.run(context.executor, (e) => e.assertIsAdmin());
       const newArrangementId = Utils.generateGUID();
@@ -315,19 +357,7 @@ export const resolvers: Resolvers = {
         },
         segments
       );
-
-      await Promise.all(
-        segments.map((segment) => {
-          saveRecording(
-            synthSegment(segment),
-            segment.id,
-            44100,
-            context.now,
-            null
-          );
-        })
-      );
-
+      await savePlaceholderRecordings(segments, context);
       return Utils.serialize(arrangement);
     },
     createPiece: async (_, args, context) => {
@@ -374,6 +404,23 @@ export const resolvers: Resolvers = {
     },
   },
 };
+
+async function savePlaceholderRecordings(
+  segments: Segment[],
+  context: Context
+) {
+  await Promise.all(
+    segments.map((segment) => {
+      saveRecording(
+        synthSegment(segment),
+        segment.id,
+        44100,
+        context.now,
+        null
+      );
+    })
+  );
+}
 
 async function saveRecording(
   buffer: Buffer,
