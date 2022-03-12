@@ -78,6 +78,16 @@ export async function makeMix(recordings: Recording[]): Promise<Mix> {
     res = shortened;
   }
 
+  // normalize
+  let worst = 0;
+  for (let i = 0; i < res.length; i++) {
+    worst = Math.max(worst, Math.abs(res[i]));
+  }
+  for (let i = 0; i < res.length; i++) {
+    res[i] /= worst;
+  }
+
+  // convert to mp3 and return
   writeFileSync("/tmp/temp.wav", encode([res], { sampleRate: 44100 }));
   await lame("--preset standard /tmp/temp.wav /tmp/temp.mp3");
   const buffer = readFileSync("/tmp/temp.mp3");
