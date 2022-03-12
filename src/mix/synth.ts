@@ -2,6 +2,8 @@ import { encode } from "node-wav";
 
 import { Segment } from "../services/db/segment";
 
+const VOLUME = 0.3;
+
 function midiToFreq(midiNote: number): number {
   return Math.pow(2, (midiNote - 69) / 12) * 440;
 }
@@ -12,7 +14,7 @@ function createSamples(duration: number, frequency: number): Float32Array {
   const angularFrequency = frequency * 2 * Math.PI;
 
   for (let i = 0; i < arr.length; i++) {
-    arr[i] = Math.sin((i / sampleRate) * angularFrequency);
+    arr[i] = Math.sin((i / sampleRate) * angularFrequency) * VOLUME;
   }
 
   if (arr.length > 1000) {
@@ -39,6 +41,5 @@ export function synthSegment(segment: Segment): Buffer {
       res[i + startOffset] = samples[i];
     }
   });
-
   return encode([res], { sampleRate: 44100 });
 }
