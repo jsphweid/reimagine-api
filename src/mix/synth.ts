@@ -36,7 +36,7 @@ export function synthSegment(segment: Segment): Buffer {
   const res = new Float32Array(len);
   segment.notes.forEach((note) => {
     const samples = createSamples(note.duration, midiToFreq(note.midi));
-    const startOffset = note.time * 44100;
+    const startOffset = Math.floor(note.time * 44100);
     for (let i = 0; i < samples.length; i++) {
       res[i + startOffset] = samples[i];
     }
