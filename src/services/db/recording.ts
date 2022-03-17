@@ -1,3 +1,4 @@
+import { Utils } from "../../utils";
 import { documentClient, tableName } from "./db-utils";
 
 // by default we care about the most recent recordings more (greatest first)
@@ -123,5 +124,34 @@ export async function _getRecordingsBySegmentId(
     .promise()
     .then((res) => {
       return res.Items ? res.Items.map(mapRecording) : [];
+    });
+}
+
+export async function _deleteRecording(recordingId: string) {
+  // TODO: MixRecordings probaly shouldn't be deleted through this path
+  // this is one of the downsides of the way I've designed the table
+  return documentClient
+    .query({
+      TableName: tableName,
+      IndexName: "GSI1",
+      KeyConditionExpression:
+        "#PK = :recordingId and begins_with(#SK, :startsWith)",
+      ExpressionAttributeNames: {
+        "#PK": "GSI1-PK",
+        "#SK": "GSI1-SK",
+      },
+      ExpressionAttributeValues: {
+        ":recordingId": recordingId,
+        ":startsWith": "Mix#",
+      },
+      ScanIndexForward: DEFAULT_SCAN_INDEX_FORWARD,
+    })
+    .promise()
+    .then(async (res) => {
+      const keys = res.Items!.map(({ PK, SK }) => ({ PK, SK }));
+      return Utils.dynamoDbBatchDelete(tableName, [
+        ...keys,
+        { PK: recordingId, SK: recordingId },
+      ]);
     });
 }

@@ -118,3 +118,9 @@ export async function _getMixesByRecordingId(
         : []
     );
 }
+
+export function _deleteMix(mixId: string) {
+  // TODO: really MixRecordings should be deleted from here, but the
+  // way I have the DB designed doesn't really make that easy from here...
+  return Utils.dynamoDbBatchDelete(tableName, [{ PK: mixId, SK: mixId }]);
+}
