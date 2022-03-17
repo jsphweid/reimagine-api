@@ -9,9 +9,11 @@ import {
   _getMixesByArrangementId,
   _getMixesByRecordingId,
   _saveMix,
+  _deleteMix,
 } from "./mix";
 import { _getAllPieces, _getPieceById, _savePiece } from "./piece";
 import {
+  _deleteRecording,
   _getRecordingById,
   _getRecordingsBySegmentId,
   _getRecordingsByUserId,
@@ -31,6 +33,7 @@ export namespace DB {
   export const saveMix = _saveMix;
   export const getMixesByArrangementId = _getMixesByArrangementId;
   export const getMixesByRecordingId = _getMixesByRecordingId;
+  export const deleteMix = _deleteMix;
 
   export const getUserSettings = _getUserSettings;
   export const upsertUserSettings = _upsertUserSettings;
@@ -45,6 +48,7 @@ export namespace DB {
   export const saveRecording = _saveRecording;
   export const getRecordingsByUserId = _getRecordingsByUserId;
   export const getRecordingsBySegmentId = _getRecordingsBySegmentId;
+  export const deleteRecording = _deleteRecording;
 
   export const getArrangementsByPieceId = _getArrangementsByPieceId;
   export const saveArrangement = _saveArrangement;

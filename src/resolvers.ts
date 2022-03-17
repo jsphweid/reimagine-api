@@ -166,6 +166,47 @@ export const resolvers: Resolvers = {
     },
   },
   Mutation: {
+    deleteArrangement: async (_, args, context) => {
+      Executor.run(context.executor, (e) => e.assertIsAdmin());
+      const arrangement = await DB.getArrangementById(args.arrangementId);
+      if (!arrangement) {
+        return "Arrangement wasn't deleted because it doesn't exist.";
+      }
+      const segments = await DB.getSegmentsByArrangementId(args.arrangementId);
+      const objectKeysToDelete = [];
+      const mixIds = [];
+      const recordingIds = [];
+      for (const segment of segments) {
+        const recordings = await DB.getRecordingsBySegmentId(segment.id);
+        for (const recording of recordings) {
+          objectKeysToDelete.push(recording.objectKey);
+          recordingIds.push(recording.id);
+        }
+      }
+      for (const mix of await DB.getMixesByArrangementId(arrangement.id)) {
+        objectKeysToDelete.push(mix.objectKey);
+        mixIds.push(mix.id);
+      }
+      console.info(`Deleting ${objectKeysToDelete.length} objects`);
+      await ObjectStorage.deleteObjects(objectKeysToDelete);
+
+      console.info(`Deleting segments...`);
+      await DB.deleteSegmentsByArrangementId(arrangement.id);
+
+      console.info(`Deleting arrangement...`);
+      await DB.deleteArrangementById(arrangement.id);
+
+      console.info(`Deleting ${recordingIds.length} recordingIds...`);
+      for (const id of recordingIds) {
+        await DB.deleteRecording(id);
+      }
+
+      console.info(`Deleting ${mixIds.length} mixIds...`);
+      for (const id of mixIds) {
+        await DB.deleteMix(id);
+      }
+      return "success";
+    },
     updateUserSettings: (_, args, context) => {
       Executor.run(context.executor, (e) => e.assertUserIdOrAdmin(args.userId));
       return DB.upsertUserSettings(args.userId, args.input);
@@ -391,16 +432,6 @@ export const resolvers: Resolvers = {
         context.executor?.userId || null
       );
       return Utils.serialize(Utils.attachPresigned(recording));
-    },
-    deleteArrangement: async (_, args, context) => {
-      Executor.run(context.executor, (e) => e.assertIsAdmin());
-      // NOTE: for now this doesn't delete relevant recordings
-      // in S3 just the arrangement and its segments
-
-      // TODO: should this handle both deletions?
-      await DB.deleteSegmentsByArrangementId(args.arrangementId);
-      await DB.deleteArrangementById(args.arrangementId);
-      return "Successful";
     },
   },
 };

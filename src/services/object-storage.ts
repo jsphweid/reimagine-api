@@ -41,4 +41,12 @@ export namespace ObjectStorage {
       .then((response) =>
         response.Body ? Buffer.from(response.Body as any) : null
       );
+
+  export const deleteObjects = (keys: string[]): Promise<any> =>
+    s3
+      .deleteObjects({
+        Bucket: bucketName,
+        Delete: { Objects: keys.map((k) => ({ Key: k })) },
+      })
+      .promise();
 }
